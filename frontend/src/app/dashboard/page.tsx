@@ -1,6 +1,9 @@
 "use client";
 
-import TrafficChart from "@/components/TrafficChart";
+import dynamic from "next/dynamic";
+const TrafficChart = dynamic(() => import("@/components/TrafficChart"), {
+  ssr: false,
+});
 import {
   Activity,
   Zap,
@@ -11,6 +14,7 @@ import {
   Link2,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { apiFetch } from "@/lib/auth";
 
 // ── Copy Button ──────────────────────────────────────────────────────────────
 function CopyButton({ text }: { text: string }) {
@@ -67,7 +71,7 @@ export default function Dashboard() {
 
     const fetchMetrics = async () => {
       try {
-        const response = await fetch(`${gatewayUrl}/api/metrics`);
+        const response = await apiFetch(`/api/metrics`);
         if (response.ok) {
           const data = await response.json();
           setMetrics(data);

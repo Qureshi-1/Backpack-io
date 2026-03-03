@@ -261,6 +261,8 @@ async def get_metrics(user=Depends(current_user)):
         total["threats_blocked"] += m["threats_blocked"]
     return total
 
+
+
 @app.get("/api/traffic")
 async def get_traffic(user=Depends(current_user)):
     conn = get_db()

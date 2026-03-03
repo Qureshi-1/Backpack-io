@@ -14,8 +14,8 @@ export default function Sidebar() {
   }, []);
 
   const links = [
-    { name: "Dashboard", href: "/", icon: LayoutDashboard },
-    { name: "Settings", href: "/settings", icon: Settings },
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Settings", href: "/dashboard/settings", icon: Settings },
   ];
 
   if (!mounted) {

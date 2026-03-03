@@ -1,19 +1,21 @@
-from fastapi import FastAPI, Request, Response, Header, HTTPException
+from fastapi import FastAPI, Request, Response, Header, HTTPException, Depends, Body
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import httpx
 import time
-import asyncio
-from collections import defaultdict, OrderedDict
-from typing import Dict, Any
-from dataclasses import dataclass
-import re
+import sqlite3
+import os
+import secrets
 import hashlib
+import re
+from collections import defaultdict, OrderedDict
+from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
+from jose import JWTError, jwt
+from passlib.context import CryptContext
 
 app = FastAPI(title="Backpack API Gateway")
 
-# CORS for Dashboard (localhost:3000)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
@@ -22,37 +24,73 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configurable Settings (in-memory, prod me Redis/DB)
-@dataclass
-class Settings:
-    target_backend_url: str = "http://localhost:3001"
-    rate_limit_enabled: bool = True
-    cache_enabled: bool = True
-    idempotency_enabled: bool = True
-    waf_enabled: bool = True
-    rate_limit_per_minute: int = 100
+# ── Auth Config ───────────────────────────────────────────────────────────────
+SECRET_KEY = os.getenv("SECRET_KEY", "backpack-secret-change-in-production")
+ALGORITHM = "HS256"
+TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
-settings = Settings()
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+security = HTTPBearer(auto_error=False)
 
-# Metrics for Dashboard
-metrics = {
-    "total_requests": 0,
-    "cache_hits": 0,
-    "threats_blocked": 0
+PLANS = {
+    "free": {"name": "Free",  "monthly_limit": 10_000,    "max_gateways": 1},
+    "pro":  {"name": "Pro",   "monthly_limit": 1_000_000, "max_gateways": 10},
 }
 
-# In-Memory Stores (Prod: Redis)
-rate_limits: Dict[str, list[float]] = defaultdict(list)
-cache: OrderedDict[str, tuple[bytes, float, dict]] = OrderedDict()  # LRU + TTL
-idempotency: Dict[str, tuple[bytes, float]] = {}  # key: (response, timestamp)
-traffic_log = defaultdict(int)
+# ── SQLite Database ───────────────────────────────────────────────────────────
+DB_PATH = os.getenv("DB_PATH", "./backpack.db")
 
-# Seed mock traffic data so chart isn't empty initially
-for i in range(30):
-    t = (datetime.now() - timedelta(minutes=30-i)).strftime("%H:%M")
-    traffic_log[t] = 0
+def get_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-# WAF Patterns (Basic SQLi/XSS)
+def init_db():
+    conn = get_db()
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS users (
+            id           TEXT PRIMARY KEY,
+            email        TEXT UNIQUE NOT NULL,
+            hashed_pw    TEXT NOT NULL,
+            plan         TEXT DEFAULT 'free',
+            created_at   REAL DEFAULT (unixepoch())
+        );
+        CREATE TABLE IF NOT EXISTS api_keys (
+            key          TEXT PRIMARY KEY,
+            user_id      TEXT NOT NULL,
+            name         TEXT DEFAULT 'My Gateway',
+            target_url   TEXT DEFAULT 'http://localhost:3001',
+            is_active    INTEGER DEFAULT 1,
+            created_at   REAL DEFAULT (unixepoch()),
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        );
+        CREATE TABLE IF NOT EXISTS gw_settings (
+            api_key               TEXT PRIMARY KEY,
+            rate_limit_enabled    INTEGER DEFAULT 1,
+            cache_enabled         INTEGER DEFAULT 1,
+            idempotency_enabled   INTEGER DEFAULT 1,
+            waf_enabled           INTEGER DEFAULT 1,
+            rate_limit_per_minute INTEGER DEFAULT 100
+        );
+    """)
+    conn.commit()
+    conn.close()
+
+init_db()
+
+# ── Per-Tenant In-Memory State (namespace = api_key) ─────────────────────────
+tenant_metrics:     Dict[str, Dict]              = defaultdict(lambda: {"total_requests": 0, "cache_hits": 0, "threats_blocked": 0})
+tenant_traffic:     Dict[str, Dict[str, int]]    = defaultdict(lambda: defaultdict(int))
+tenant_rate_limits: Dict[str, Dict[str, list]]   = defaultdict(lambda: defaultdict(list))
+tenant_cache:       Dict[str, OrderedDict]        = defaultdict(OrderedDict)
+tenant_idempotency: Dict[str, Dict]               = defaultdict(dict)
+
+# Seed traffic buckets on startup so chart has data
+for _i in range(30):
+    _t = (datetime.now() - timedelta(minutes=30 - _i)).strftime("%H:%M")
+    tenant_traffic["__global__"][_t] = 0
+
+# ── WAF Patterns ──────────────────────────────────────────────────────────────
 WAF_PATTERNS = [
     re.compile(r"union\s+select", re.I),
     re.compile(r"<script", re.I),
@@ -60,120 +98,322 @@ WAF_PATTERNS = [
     re.compile(r"eval\(", re.I),
 ]
 
-async def forward_to_backend(request: Request, backend_url: str) -> Response:
-    """Zero-Knowledge Forward: Body untouched"""
+# ── Auth Helpers ──────────────────────────────────────────────────────────────
+def verify_password(plain: str, hashed: str) -> bool:
+    return pwd_context.verify(plain, hashed)
+
+def hash_password(pw: str) -> str:
+    return pwd_context.hash(pw)
+
+def create_token(user_id: str) -> str:
+    expire = datetime.utcnow() + timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+    return jwt.encode({"sub": user_id, "exp": expire}, SECRET_KEY, algorithm=ALGORITHM)
+
+def current_user(creds: Optional[HTTPAuthorizationCredentials] = Depends(security)):
+    if not creds:
+        raise HTTPException(401, "Authentication required")
+    try:
+        payload = jwt.decode(creds.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        uid = payload.get("sub")
+        if not uid:
+            raise HTTPException(401, "Invalid token")
+    except JWTError:
+        raise HTTPException(401, "Invalid or expired token")
+    conn = get_db()
+    user = conn.execute("SELECT * FROM users WHERE id = ?", (uid,)).fetchone()
+    conn.close()
+    if not user:
+        raise HTTPException(401, "User not found")
+    return dict(user)
+
+def load_api_key(key: str):
+    conn = get_db()
+    row = conn.execute("SELECT * FROM api_keys WHERE key = ? AND is_active = 1", (key,)).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def load_gw_settings(api_key: str) -> dict:
+    conn = get_db()
+    row = conn.execute("SELECT * FROM gw_settings WHERE api_key = ?", (api_key,)).fetchone()
+    conn.close()
+    if row:
+        return dict(row)
+    return {"rate_limit_enabled": 1, "cache_enabled": 1, "idempotency_enabled": 1, "waf_enabled": 1, "rate_limit_per_minute": 100}
+
+# ── Auth Endpoints ────────────────────────────────────────────────────────────
+@app.post("/auth/signup")
+async def signup(data: Dict[str, Any] = Body(...)):
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
+    if not email or not password:
+        raise HTTPException(400, "Email and password are required")
+    if len(password) < 6:
+        raise HTTPException(400, "Password must be at least 6 characters")
+
+    user_id = secrets.token_hex(16)
+    api_key = "bk_" + secrets.token_hex(24)
+    conn = get_db()
+    try:
+        conn.execute(
+            "INSERT INTO users (id, email, hashed_pw, plan) VALUES (?, ?, ?, 'free')",
+            (user_id, email, hash_password(password))
+        )
+        conn.execute(
+            "INSERT INTO api_keys (key, user_id, name, target_url) VALUES (?, ?, ?, ?)",
+            (api_key, user_id, "My First Gateway", "http://localhost:3001")
+        )
+        conn.execute("INSERT INTO gw_settings (api_key) VALUES (?)", (api_key,))
+        conn.commit()
+    except sqlite3.IntegrityError:
+        conn.close()
+        raise HTTPException(409, "Email already registered")
+    conn.close()
+    return {"access_token": create_token(user_id), "default_key": api_key}
+
+@app.post("/auth/login")
+async def login(data: Dict[str, Any] = Body(...)):
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
+    conn = get_db()
+    user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+    conn.close()
+    if not user or not verify_password(password, user["hashed_pw"]):
+        raise HTTPException(401, "Invalid email or password")
+    # Return first active key too
+    conn = get_db()
+    key_row = conn.execute("SELECT key FROM api_keys WHERE user_id = ? AND is_active = 1 LIMIT 1", (user["id"],)).fetchone()
+    conn.close()
+    return {"access_token": create_token(user["id"]), "default_key": key_row["key"] if key_row else None}
+
+@app.get("/auth/me")
+async def get_me(user=Depends(current_user)):
+    return {"id": user["id"], "email": user["email"], "plan": user["plan"]}
+
+# ── API Key Management ────────────────────────────────────────────────────────
+@app.get("/api/keys")
+async def list_keys(user=Depends(current_user)):
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT key, name, target_url, is_active, created_at FROM api_keys WHERE user_id = ? ORDER BY created_at ASC",
+        (user["id"],)
+    ).fetchall()
+    conn.close()
+    # Attach live metrics
+    result = []
+    for r in rows:
+        d = dict(r)
+        d["metrics"] = tenant_metrics.get(d["key"], {"total_requests": 0, "cache_hits": 0, "threats_blocked": 0})
+        result.append(d)
+    return {"keys": result, "plan": user["plan"], "limits": PLANS[user["plan"]]}
+
+@app.post("/api/keys")
+async def create_key(data: Dict[str, Any] = Body(...), user=Depends(current_user)):
+    conn = get_db()
+    count = conn.execute(
+        "SELECT COUNT(*) FROM api_keys WHERE user_id = ? AND is_active = 1", (user["id"],)
+    ).fetchone()[0]
+    max_gw = PLANS[user["plan"]]["max_gateways"]
+    if count >= max_gw:
+        conn.close()
+        raise HTTPException(403, f"Your {user['plan']} plan allows {max_gw} gateway(s). Upgrade to Pro for more.")
+
+    api_key = "bk_" + secrets.token_hex(24)
+    name = data.get("name", "New Gateway")
+    target_url = data.get("target_url", "http://localhost:3001")
+    conn.execute("INSERT INTO api_keys (key, user_id, name, target_url) VALUES (?, ?, ?, ?)",
+                 (api_key, user["id"], name, target_url))
+    conn.execute("INSERT INTO gw_settings (api_key) VALUES (?)", (api_key,))
+    conn.commit()
+    conn.close()
+    return {"key": api_key, "name": name, "target_url": target_url}
+
+@app.delete("/api/keys/{key}")
+async def delete_key(key: str, user=Depends(current_user)):
+    conn = get_db()
+    conn.execute("UPDATE api_keys SET is_active = 0 WHERE key = ? AND user_id = ?", (key, user["id"]))
+    conn.commit()
+    conn.close()
+    return {"status": "deleted"}
+
+# ── Dashboard Metrics (JWT-protected) ─────────────────────────────────────────
+@app.get("/api/metrics")
+async def get_metrics(user=Depends(current_user)):
+    conn = get_db()
+    keys = [r[0] for r in conn.execute(
+        "SELECT key FROM api_keys WHERE user_id = ? AND is_active = 1", (user["id"],)
+    ).fetchall()]
+    conn.close()
+    total = {"total_requests": 0, "cache_hits": 0, "threats_blocked": 0}
+    for k in keys:
+        m = tenant_metrics[k]
+        total["total_requests"] += m["total_requests"]
+        total["cache_hits"] += m["cache_hits"]
+        total["threats_blocked"] += m["threats_blocked"]
+    return total
+
+@app.get("/api/traffic")
+async def get_traffic(user=Depends(current_user)):
+    conn = get_db()
+    keys = [r[0] for r in conn.execute(
+        "SELECT key FROM api_keys WHERE user_id = ? AND is_active = 1", (user["id"],)
+    ).fetchall()]
+    conn.close()
+    merged: Dict[str, int] = defaultdict(int)
+    for k in keys:
+        for t, count in tenant_traffic[k].items():
+            merged[t] += count
+    data = [{"time": k, "requests": v} for k, v in sorted(merged.items())[-30:]]
+    return {"traffic_data": data}
+
+@app.get("/api/settings")
+async def get_settings(x_api_key: str = Header(..., alias="X-API-Key"), user=Depends(current_user)):
+    rec = load_api_key(x_api_key)
+    if not rec or rec["user_id"] != user["id"]:
+        raise HTTPException(403, "Invalid API key")
+    s = load_gw_settings(x_api_key)
+    return {
+        "target_backend_url": rec["target_url"],
+        "rate_limit_enabled": bool(s["rate_limit_enabled"]),
+        "cache_enabled": bool(s["cache_enabled"]),
+        "idempotency_enabled": bool(s["idempotency_enabled"]),
+        "waf_enabled": bool(s["waf_enabled"]),
+        "rate_limit_per_minute": s["rate_limit_per_minute"],
+    }
+
+@app.post("/api/settings")
+async def save_settings(
+    data: Dict[str, Any] = Body(...),
+    x_api_key: str = Header(..., alias="X-API-Key"),
+    user=Depends(current_user)
+):
+    rec = load_api_key(x_api_key)
+    if not rec or rec["user_id"] != user["id"]:
+        raise HTTPException(403, "Invalid API key")
+    conn = get_db()
+    conn.execute("UPDATE api_keys SET target_url = ? WHERE key = ?",
+                 (data.get("target_backend_url", rec["target_url"]), x_api_key))
+    conn.execute("""
+        UPDATE gw_settings SET
+            rate_limit_enabled = ?,
+            cache_enabled = ?,
+            idempotency_enabled = ?,
+            waf_enabled = ?,
+            rate_limit_per_minute = ?
+        WHERE api_key = ?
+    """, (
+        int(data.get("rate_limit_enabled", True)),
+        int(data.get("cache_enabled", True)),
+        int(data.get("idempotency_enabled", True)),
+        int(data.get("waf_enabled", True)),
+        int(data.get("rate_limit_per_minute", 100)),
+        x_api_key,
+    ))
+    conn.commit()
+    conn.close()
+    return {"status": "saved"}
+
+# ── Proxy (X-API-Key required — public gateway traffic) ───────────────────────
+async def _forward(request: Request, backend_url: str) -> Response:
     async with httpx.AsyncClient() as client:
         headers = dict(request.headers)
         headers.pop("host", None)
-        
+        headers.pop("x-api-key", None)   # don't forward our key to the backend
         resp = await client.request(
             method=request.method,
-            url=f"{backend_url.rstrip('/')}{request.url.path}{request.url.query}",
+            url=f"{backend_url.rstrip('/')}{request.url.path}{'?' + request.url.query if request.url.query else ''}",
             headers=headers,
             content=await request.body(),
         )
         return Response(content=resp.content, status_code=resp.status_code, headers=dict(resp.headers))
 
-def check_rate_limit(ip: str) -> bool:
-    now = time.time()
-    rate_limits[ip] = [t for t in rate_limits[ip] if now - t < 60]
-    if len(rate_limits[ip]) >= settings.rate_limit_per_minute:
-        return False
-    rate_limits[ip].append(now)
-    return True
-
-def check_waf(body: bytes) -> bool:
-    text = body.decode(errors="ignore").lower()
-    return any(pattern.search(text) for pattern in WAF_PATTERNS)
-
-def get_cache_key(request: Request) -> str:
-    return hashlib.md5(f"{request.method}{request.url.path}{request.url.query}".encode()).hexdigest()
-
-@app.get("/api/metrics")
-async def get_metrics():
-    return metrics
-
-@app.post("/api/settings")
-async def save_settings(new_settings: Dict[str, Any]):
-    global settings
-    settings.target_backend_url = new_settings.get("target_backend_url", settings.target_backend_url)
-    settings.rate_limit_enabled = new_settings.get("rate_limit_enabled", settings.rate_limit_enabled)
-    settings.cache_enabled = new_settings.get("cache_enabled", settings.cache_enabled)
-    settings.idempotency_enabled = new_settings.get("idempotency_enabled", settings.idempotency_enabled)
-    settings.waf_enabled = new_settings.get("waf_enabled", settings.waf_enabled)
-    settings.rate_limit_per_minute = new_settings.get("rate_limit_per_minute", 100)
-    return {"status": "saved"}
-
-@app.get("/api/settings")
-async def get_settings():
-    return {
-        "target_backend_url": settings.target_backend_url,
-        "rate_limit_enabled": settings.rate_limit_enabled,
-        "cache_enabled": settings.cache_enabled,
-        "idempotency_enabled": settings.idempotency_enabled,
-        "waf_enabled": settings.waf_enabled,
-        "rate_limit_per_minute": settings.rate_limit_per_minute
-    }
-
-@app.get("/api/traffic")
-async def get_traffic():
-    data = [{"time": k, "requests": v} for k, v in list(traffic_log.items())[-30:]]
-    return {"traffic_data": data}
-
-# PROXY ENDPOINT (Public API Traffic)
 @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
-async def proxy(request: Request, path: str, x_idempotency_key: str = Header(None)):
-    global metrics, traffic_log
-    metrics["total_requests"] += 1
-    current_time = datetime.now().strftime("%H:%M")
-    traffic_log[current_time] += 1
-    
-    client_ip = request.client.host
+async def proxy(
+    request: Request,
+    path: str,
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    x_idempotency_key: Optional[str] = Header(None, alias="X-Idempotency-Key"),
+):
+    if not x_api_key:
+        raise HTTPException(
+            401,
+            detail="X-API-Key header required. Get your key at http://localhost:3000/dashboard/api-keys"
+        )
+
+    rec = load_api_key(x_api_key)
+    if not rec:
+        raise HTTPException(401, "Invalid or inactive API key")
+
+    # Check plan quota
+    conn = get_db()
+    user_row = conn.execute("SELECT plan FROM users WHERE id = ?", (rec["user_id"],)).fetchone()
+    conn.close()
+    plan = user_row["plan"] if user_row else "free"
+    monthly_limit = PLANS[plan]["monthly_limit"]
+    m = tenant_metrics[x_api_key]
+    if m["total_requests"] >= monthly_limit:
+        raise HTTPException(429, f"Monthly limit of {monthly_limit:,} requests reached. Upgrade your plan at the dashboard.")
+
+    # Metrics + traffic
+    m["total_requests"] += 1
+    tenant_traffic[x_api_key][datetime.now().strftime("%H:%M")] += 1
+
+    s = load_gw_settings(x_api_key)
+    ip = request.client.host
 
     # Rate Limit
-    if settings.rate_limit_enabled and not check_rate_limit(client_ip):
-        metrics["threats_blocked"] += 1
-        raise HTTPException(429, "Too Many Requests")
+    if s["rate_limit_enabled"]:
+        store = tenant_rate_limits[x_api_key]
+        now = time.time()
+        store[ip] = [t for t in store[ip] if now - t < 60]
+        if len(store[ip]) >= s["rate_limit_per_minute"]:
+            m["threats_blocked"] += 1
+            raise HTTPException(429, "Rate limit exceeded")
+        store[ip].append(now)
 
     # WAF
-    if settings.waf_enabled:
-        body = await request.body()
-        if check_waf(body):
-            metrics["threats_blocked"] += 1
-            raise HTTPException(403, "Security Block")
+    body = await request.body()
+    if s["waf_enabled"]:
+        text = body.decode(errors="ignore").lower()
+        if any(p.search(text) for p in WAF_PATTERNS):
+            m["threats_blocked"] += 1
+            raise HTTPException(403, "Request blocked by WAF")
 
-    # Idempotency (POST only)
-    if settings.idempotency_enabled and request.method == "POST" and x_idempotency_key:
-        key_hash = hashlib.md5(x_idempotency_key.encode()).hexdigest()
-        if key_hash in idempotency:
-            resp_data, ts = idempotency[key_hash]
-            if time.time() - ts < 86400:  # 24h TTL
-                return Response(content=resp_data)
+    # Idempotency
+    if s["idempotency_enabled"] and request.method == "POST" and x_idempotency_key:
+        store = tenant_idempotency[x_api_key]
+        kh = hashlib.md5(x_idempotency_key.encode()).hexdigest()
+        if kh in store:
+            data_cached, ts, hdrs = store[kh]
+            if time.time() - ts < 86400:
+                return Response(content=data_cached, headers=hdrs)
 
-    # Cache (GET only)
-    if settings.cache_enabled and request.method == "GET":
-        cache_key = get_cache_key(request)
+    # Cache (GET)
+    cache_key = hashlib.md5(f"{request.method}{request.url.path}{request.url.query}".encode()).hexdigest()
+    if s["cache_enabled"] and request.method == "GET":
+        cache = tenant_cache[x_api_key]
         if cache_key in cache:
-            data, ts, headers = cache[cache_key]
-            if time.time() - ts < 300:  # 5min TTL
-                metrics["cache_hits"] += 1
-                return Response(content=data, headers=headers)
+            data_cached, ts, hdrs = cache[cache_key]
+            if time.time() - ts < 300:
+                m["cache_hits"] += 1
+                return Response(content=data_cached, headers=hdrs)
 
-    # Forward to Backend
-    backend_resp = await forward_to_backend(request, settings.target_backend_url)
+    # Forward to backend
+    backend_resp = await _forward(request, rec["target_url"])
 
-    # Cache Response (GET)
-    if settings.cache_enabled and request.method == "GET":
-        cache_key = get_cache_key(request)
+    # Store cache
+    if s["cache_enabled"] and request.method == "GET":
+        cache = tenant_cache[x_api_key]
         cache[cache_key] = (backend_resp.body, time.time(), dict(backend_resp.headers))
+        if len(cache) > 1000:
+            cache.popitem(last=False)
 
-    # Store Idempotency
-    if settings.idempotency_enabled and request.method == "POST" and x_idempotency_key:
-        key_hash = hashlib.md5(x_idempotency_key.encode()).hexdigest()
-        idempotency[key_hash] = (backend_resp.body, time.time())
+    # Store idempotency
+    if s["idempotency_enabled"] and request.method == "POST" and x_idempotency_key:
+        kh = hashlib.md5(x_idempotency_key.encode()).hexdigest()
+        tenant_idempotency[x_api_key][kh] = (backend_resp.body, time.time(), dict(backend_resp.headers))
 
     return backend_resp
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8080)  # Change port as needed
+    uvicorn.run(app, host="0.0.0.0", port=8080)

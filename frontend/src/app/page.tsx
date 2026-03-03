@@ -1,11 +1,26 @@
 "use client";
 
-import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
+import {
+  motion,
+  useMotionValue,
+  useTransform,
+  AnimatePresence,
+} from "framer-motion";
 import Link from "next/link";
 import {
-  ShieldCheck, Zap, Layers, Lock, Activity, Server,
-  CheckCircle2, TerminalSquare, Database, ArrowRight,
-  X, XCircle, AlertTriangle,
+  ShieldCheck,
+  Zap,
+  Layers,
+  Lock,
+  Activity,
+  Server,
+  CheckCircle2,
+  TerminalSquare,
+  Database,
+  ArrowRight,
+  X,
+  XCircle,
+  AlertTriangle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -17,69 +32,129 @@ const MouseGlow = () => {
   const background = useTransform(
     [mouseX, mouseY],
     ([x, y]: number[]) =>
-      `radial-gradient(600px circle at ${x}px ${y}px, rgba(16,185,129,0.06), transparent 80%)`
+      `radial-gradient(600px circle at ${x}px ${y}px, rgba(16,185,129,0.06), transparent 80%)`,
   );
   useEffect(() => {
     setMounted(true);
-    const h = (e: MouseEvent) => { mouseX.set(e.clientX); mouseY.set(e.clientY); };
+    const h = (e: MouseEvent) => {
+      mouseX.set(e.clientX);
+      mouseY.set(e.clientY);
+    };
     window.addEventListener("mousemove", h);
     return () => window.removeEventListener("mousemove", h);
   }, [mouseX, mouseY]);
   if (!mounted) return null;
-  return <motion.div className="pointer-events-none fixed inset-0 z-50" style={{ background }} />;
+  return (
+    <motion.div
+      className="pointer-events-none fixed inset-0 z-50"
+      style={{ background }}
+    />
+  );
 };
 
 // ─── Demo Modal ───────────────────────────────────────────────────────────────
 const DEMO_LINES = [
-  { delay: 0,    text: "$ docker pull ghcr.io/backpack-io/gateway:latest", color: "text-zinc-300" },
-  { delay: 1000, text: "latest: Pulling from backpack-io/gateway...", color: "text-zinc-500" },
-  { delay: 1800, text: "✓  Image pulled successfully", color: "text-emerald-400" },
-  { delay: 2400, text: "$ docker run -p 8080:8080 -e TARGET_URL=http://your-api.com backpack", color: "text-zinc-300" },
-  { delay: 3400, text: "INFO:     Backpack Gateway starting on port 8080", color: "text-zinc-500" },
-  { delay: 4000, text: "INFO:     WAF enabled — 47 threat patterns loaded", color: "text-zinc-500" },
-  { delay: 4600, text: "INFO:     LRU Cache ready (max=1000, TTL=5min)", color: "text-zinc-500" },
-  { delay: 5200, text: "✓  Gateway is live at http://localhost:8080", color: "text-emerald-400" },
+  {
+    delay: 0,
+    text: "$ docker pull ghcr.io/backpack-io/gateway:latest",
+    color: "text-zinc-300",
+  },
+  {
+    delay: 1000,
+    text: "latest: Pulling from backpack-io/gateway...",
+    color: "text-zinc-500",
+  },
+  {
+    delay: 1800,
+    text: "✓  Image pulled successfully",
+    color: "text-emerald-400",
+  },
+  {
+    delay: 2400,
+    text: "$ docker run -p 8080:8080 -e TARGET_URL=http://your-api.com backpack",
+    color: "text-zinc-300",
+  },
+  {
+    delay: 3400,
+    text: "INFO:     Backpack Gateway starting on port 8080",
+    color: "text-zinc-500",
+  },
+  {
+    delay: 4000,
+    text: "INFO:     WAF enabled — 47 threat patterns loaded",
+    color: "text-zinc-500",
+  },
+  {
+    delay: 4600,
+    text: "INFO:     LRU Cache ready (max=1000, TTL=5min)",
+    color: "text-zinc-500",
+  },
+  {
+    delay: 5200,
+    text: "✓  Gateway is live at http://localhost:8080",
+    color: "text-emerald-400",
+  },
   { delay: 6000, text: "", color: "" },
-  { delay: 6100, text: "# Your backend is now protected 🎒", color: "text-cyan-400" },
-  { delay: 6900, text: "# Rate Limiting ✓  Cache ✓  WAF ✓  Idempotency ✓", color: "text-cyan-400" },
+  {
+    delay: 6100,
+    text: "# Your backend is now protected 🎒",
+    color: "text-cyan-400",
+  },
+  {
+    delay: 6900,
+    text: "# Rate Limiting ✓  Cache ✓  WAF ✓  Idempotency ✓",
+    color: "text-cyan-400",
+  },
 ];
 
 const DemoModal = ({ onClose }: { onClose: () => void }) => {
   const [visibleLines, setVisibleLines] = useState(0);
   useEffect(() => {
     const timers = DEMO_LINES.map((l, i) =>
-      setTimeout(() => setVisibleLines(i + 1), l.delay)
+      setTimeout(() => setVisibleLines(i + 1), l.delay),
     );
     return () => timers.forEach(clearTimeout);
   }, []);
 
   return (
     <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm px-4"
       onClick={onClose}
     >
       <motion.div
-        initial={{ scale: 0.93, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.93, opacity: 0 }} transition={{ type: "spring", stiffness: 280, damping: 28 }}
+        initial={{ scale: 0.93, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.93, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 280, damping: 28 }}
         onClick={(e) => e.stopPropagation()}
         className="relative w-full max-w-2xl rounded-2xl border border-white/10 bg-zinc-950 shadow-2xl overflow-hidden"
       >
         {/* Title bar */}
         <div className="flex items-center gap-2 border-b border-white/5 bg-zinc-900/70 px-4 py-3">
-          <button onClick={onClose}
-            className="group flex h-3.5 w-3.5 items-center justify-center rounded-full bg-rose-500 hover:bg-rose-400 transition-colors">
+          <button
+            onClick={onClose}
+            className="group flex h-3.5 w-3.5 items-center justify-center rounded-full bg-rose-500 hover:bg-rose-400 transition-colors"
+          >
             <X className="h-2 w-2 opacity-0 group-hover:opacity-100 text-rose-900" />
           </button>
           <div className="h-3.5 w-3.5 rounded-full bg-yellow-400" />
           <div className="h-3.5 w-3.5 rounded-full bg-emerald-500" />
-          <span className="mx-auto font-mono text-xs text-zinc-500">bash — backpack demo</span>
+          <span className="mx-auto font-mono text-xs text-zinc-500">
+            bash — backpack demo
+          </span>
         </div>
         {/* Terminal body */}
         <div className="p-6 font-mono text-sm leading-7 min-h-[300px]">
           {DEMO_LINES.slice(0, visibleLines).map((line, i) => (
-            <motion.p key={i} initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }}
-              className={line.color}>
+            <motion.p
+              key={i}
+              initial={{ opacity: 0, x: -4 }}
+              animate={{ opacity: 1, x: 0 }}
+              className={line.color}
+            >
               {line.text || "\u00A0"}
             </motion.p>
           ))}
@@ -88,9 +163,14 @@ const DemoModal = ({ onClose }: { onClose: () => void }) => {
           )}
         </div>
         <div className="flex items-center justify-between border-t border-white/5 bg-zinc-900/40 px-6 py-4">
-          <p className="text-xs text-zinc-500">Backpack Gateway · 1-min setup demo</p>
-          <Link href="/dashboard" onClick={onClose}
-            className="rounded-lg bg-emerald-500 px-4 py-2 text-xs font-semibold text-black hover:bg-emerald-400 transition-colors">
+          <p className="text-xs text-zinc-500">
+            Backpack Gateway · 1-min setup demo
+          </p>
+          <Link
+            href="/dashboard"
+            onClick={onClose}
+            className="rounded-lg bg-emerald-500 px-4 py-2 text-xs font-semibold text-black hover:bg-emerald-400 transition-colors"
+          >
             Open Dashboard →
           </Link>
         </div>
@@ -101,24 +181,42 @@ const DemoModal = ({ onClose }: { onClose: () => void }) => {
 
 // ─── Header ───────────────────────────────────────────────────────────────────
 const Header = ({ onDemo }: { onDemo: () => void }) => (
-  <header className="fixed top-0 left-0 right-0 z-40 border-b border-white/5 bg-black/50 backdrop-blur-xl">
+  <header
+    suppressHydrationWarning
+    className="fixed top-0 left-0 right-0 z-40 border-b border-white/5 bg-black/50 backdrop-blur-xl"
+  >
     <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
       <div className="flex items-center gap-2">
         <ShieldCheck className="h-6 w-6 text-emerald-500" />
-        <span className="text-lg font-semibold tracking-tight text-white">Backpack</span>
+        <span className="text-lg font-semibold tracking-tight text-white">
+          Backpack
+        </span>
       </div>
       <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-400">
-        <a href="#features" className="hover:text-white transition-colors">Features</a>
-        <a href="#how-it-works" className="hover:text-white transition-colors">How it Works</a>
-        <a href="#compare" className="hover:text-white transition-colors">Compare</a>
-        <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
+        <a href="#features" className="hover:text-white transition-colors">
+          Features
+        </a>
+        <a href="#how-it-works" className="hover:text-white transition-colors">
+          How it Works
+        </a>
+        <a href="#compare" className="hover:text-white transition-colors">
+          Compare
+        </a>
+        <a href="#pricing" className="hover:text-white transition-colors">
+          Pricing
+        </a>
       </nav>
       <div className="flex items-center gap-4">
-        <button onClick={onDemo} className="hidden md:block text-sm font-medium text-zinc-400 hover:text-white transition-colors">
+        <button
+          onClick={onDemo}
+          className="hidden md:block text-sm font-medium text-zinc-400 hover:text-white transition-colors"
+        >
           Demo
         </button>
-        <Link href="/dashboard"
-          className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-black hover:scale-105 active:scale-95 transition-transform">
+        <Link
+          href="/dashboard"
+          className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-black hover:scale-105 active:scale-95 transition-transform"
+        >
           Start Free
         </Link>
       </div>
@@ -131,40 +229,64 @@ const Hero = ({ onDemo }: { onDemo: () => void }) => (
   <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
     <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
     <div className="mx-auto max-w-7xl px-6 relative z-10 text-center">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-        className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-sm text-emerald-400 mb-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-sm text-emerald-400 mb-8"
+      >
         <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
         Backpack 1.0 is now live
       </motion.div>
 
-      <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-        className="mx-auto max-w-4xl text-5xl font-bold tracking-tight text-white md:text-7xl lg:text-8xl">
+      <motion.h1
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="mx-auto max-w-4xl text-5xl font-bold tracking-tight text-white md:text-7xl lg:text-8xl"
+      >
         Security & Speed for <br className="hidden md:block" />
         <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-500">
           Every Backend
         </span>
       </motion.h1>
 
-      <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-        className="mx-auto mt-6 max-w-2xl text-lg text-zinc-400 md:text-xl leading-relaxed">
-        Add rate limiting, intelligent caching, idempotency, and WAF to any backend in 30 seconds. No code changes required.
+      <motion.p
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="mx-auto mt-6 max-w-2xl text-lg text-zinc-400 md:text-xl leading-relaxed"
+      >
+        Add rate limiting, intelligent caching, idempotency, and WAF to any
+        backend in 30 seconds. No code changes required.
       </motion.p>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-        className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-        <Link href="/dashboard"
-          className="group flex h-12 items-center gap-2 rounded-full bg-white px-8 text-sm font-semibold text-black hover:scale-105 active:scale-95 transition-all">
-          Start Free <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
+      >
+        <Link
+          href="/dashboard"
+          className="group flex h-12 items-center gap-2 rounded-full bg-white px-8 text-sm font-semibold text-black hover:scale-105 active:scale-95 transition-all"
+        >
+          Start Free{" "}
+          <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
         </Link>
-        <button onClick={onDemo}
-          className="flex h-12 items-center gap-2 rounded-full border border-zinc-700 bg-zinc-900/50 px-8 text-sm font-semibold text-white hover:bg-zinc-800 hover:border-zinc-600 transition-all">
+        <button
+          onClick={onDemo}
+          className="flex h-12 items-center gap-2 rounded-full border border-zinc-700 bg-zinc-900/50 px-8 text-sm font-semibold text-white hover:bg-zinc-800 hover:border-zinc-600 transition-all"
+        >
           <TerminalSquare className="h-4 w-4" /> Watch 1-min Demo
         </button>
       </motion.div>
     </div>
     <div className="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center">
-      <motion.div animate={{ y: [0, -20, 0] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        className="h-[600px] w-[600px] rounded-full bg-emerald-500 opacity-10 blur-[130px]" />
+      <motion.div
+        animate={{ y: [0, -20, 0] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        className="h-[600px] w-[600px] rounded-full bg-emerald-500 opacity-10 blur-[130px]"
+      />
     </div>
   </section>
 );
@@ -173,8 +295,12 @@ const Hero = ({ onDemo }: { onDemo: () => void }) => (
 const TechStack = () => (
   <div className="border-y border-white/5 bg-black/30 py-10">
     <div className="mx-auto max-w-7xl px-6">
-      <p className="mb-2 text-center text-xs font-semibold uppercase tracking-widest text-zinc-600">Powered by Open Source</p>
-      <p className="mb-8 text-center text-xs text-zinc-700">100% MIT licensed · no vendor lock-in</p>
+      <p className="mb-2 text-center text-xs font-semibold uppercase tracking-widest text-zinc-600">
+        Powered by Open Source
+      </p>
+      <p className="mb-8 text-center text-xs text-zinc-700">
+        100% MIT licensed · no vendor lock-in
+      </p>
       <div className="flex flex-wrap justify-center gap-10 opacity-60 sm:gap-20">
         {[
           { icon: Server, label: "FastAPI" },
@@ -182,7 +308,10 @@ const TechStack = () => (
           { icon: TerminalSquare, label: "Python" },
           { icon: Database, label: "Docker" },
         ].map(({ icon: Icon, label }) => (
-          <div key={label} className="flex cursor-default items-center gap-3 text-lg font-medium text-zinc-400 transition-colors hover:text-white">
+          <div
+            key={label}
+            className="flex cursor-default items-center gap-3 text-lg font-medium text-zinc-400 transition-colors hover:text-white"
+          >
             <Icon className="h-5 w-5" /> {label}
           </div>
         ))}
@@ -195,14 +324,27 @@ const TechStack = () => (
 const ProblemSolution = () => (
   <section className="bg-black py-28">
     <div className="mx-auto max-w-7xl px-6">
-      <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-        className="mb-16 text-center">
-        <h2 className="mb-4 text-3xl font-bold text-white sm:text-5xl">Your backend deserves a shield.</h2>
-        <p className="mx-auto max-w-xl text-zinc-400">Without Backpack, every public API is one bad request away from a crisis.</p>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="mb-16 text-center"
+      >
+        <h2 className="mb-4 text-3xl font-bold text-white sm:text-5xl">
+          Your backend deserves a shield.
+        </h2>
+        <p className="mx-auto max-w-xl text-zinc-400">
+          Without Backpack, every public API is one bad request away from a
+          crisis.
+        </p>
       </motion.div>
       <div className="grid gap-8 md:grid-cols-2">
-        <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
-          className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-8">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-8"
+        >
           <div className="mb-6 flex items-center gap-2 font-semibold text-rose-400">
             <XCircle className="h-5 w-5" /> Without Backpack
           </div>
@@ -214,15 +356,23 @@ const ProblemSolution = () => (
               "Duplicate payments processed when user retries a payment",
               "Zero visibility into traffic hitting your raw server",
             ].map((p) => (
-              <li key={p} className="flex items-start gap-3 text-sm text-zinc-400">
-                <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-rose-500" /> {p}
+              <li
+                key={p}
+                className="flex items-start gap-3 text-sm text-zinc-400"
+              >
+                <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-rose-500" />{" "}
+                {p}
               </li>
             ))}
           </ul>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
-          className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-8">
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-8"
+        >
           <div className="mb-6 flex items-center gap-2 font-semibold text-emerald-400">
             <ShieldCheck className="h-5 w-5" /> With Backpack
           </div>
@@ -234,8 +384,12 @@ const ProblemSolution = () => (
               "Idempotency keys ensure each operation runs exactly once",
               "Real-time dashboard shows every request, hit, and block",
             ].map((p) => (
-              <li key={p} className="flex items-start gap-3 text-sm text-zinc-300">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-400" /> {p}
+              <li
+                key={p}
+                className="flex items-start gap-3 text-sm text-zinc-300"
+              >
+                <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-400" />{" "}
+                {p}
               </li>
             ))}
           </ul>
@@ -248,32 +402,77 @@ const ProblemSolution = () => (
 // ─── Features ─────────────────────────────────────────────────────────────────
 const Features = () => {
   const feats = [
-    { title: "Zero-Knowledge Proxying", description: "Routes traffic without stripping headers or modifying payloads. Fully transparent.", icon: Activity },
-    { title: "Intelligent WAF", description: "Blocks SQLi and XSS before they reach your backend using deep pattern matching.", icon: ShieldCheck },
-    { title: "Sliding Window Rate Limit", description: "Per-IP abuse prevention via sliding window memory counters. Configurable limits.", icon: Lock },
-    { title: "LRU Caching", description: "Sub-millisecond GET response cache with configurable TTL to slash database load.", icon: Zap },
-    { title: "POST Idempotency", description: "Guarantees endpoints execute once per unique key. Safe retries, always.", icon: Layers },
-    { title: "Real-time Dashboard", description: "Live metrics for total requests, cache hits, and blocked threats. Zero setup.", icon: Server },
+    {
+      title: "Zero-Knowledge Proxying",
+      description:
+        "Routes traffic without stripping headers or modifying payloads. Fully transparent.",
+      icon: Activity,
+    },
+    {
+      title: "Intelligent WAF",
+      description:
+        "Blocks SQLi and XSS before they reach your backend using deep pattern matching.",
+      icon: ShieldCheck,
+    },
+    {
+      title: "Sliding Window Rate Limit",
+      description:
+        "Per-IP abuse prevention via sliding window memory counters. Configurable limits.",
+      icon: Lock,
+    },
+    {
+      title: "LRU Caching",
+      description:
+        "Sub-millisecond GET response cache with configurable TTL to slash database load.",
+      icon: Zap,
+    },
+    {
+      title: "POST Idempotency",
+      description:
+        "Guarantees endpoints execute once per unique key. Safe retries, always.",
+      icon: Layers,
+    },
+    {
+      title: "Real-time Dashboard",
+      description:
+        "Live metrics for total requests, cache hits, and blocked threats. Zero setup.",
+      icon: Server,
+    },
   ];
   return (
     <section id="features" className="py-24 relative">
       <div className="mx-auto max-w-7xl px-6">
         <div className="mb-16 max-w-3xl">
-          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-5xl">Everything you need. <br />Nothing you don't.</h2>
-          <p className="mt-4 text-zinc-400">One gateway. Zero config. All the infrastructure you've been putting off.</p>
+          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-5xl">
+            Everything you need. <br />
+            Nothing you don't.
+          </h2>
+          <p className="mt-4 text-zinc-400">
+            One gateway. Zero config. All the infrastructure you've been putting
+            off.
+          </p>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {feats.map((f, i) => (
-            <motion.div key={f.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-80px" }} transition={{ delay: i * 0.07 }}
-              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/40 p-8 transition-colors hover:bg-zinc-900/80">
+            <motion.div
+              key={f.title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ delay: i * 0.07 }}
+              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/40 p-8 transition-colors hover:bg-zinc-900/80"
+            >
               <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
               <div className="relative z-10">
                 <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-white/5 bg-zinc-800 text-emerald-400 transition-colors group-hover:border-emerald-500/30 group-hover:bg-emerald-500/20">
                   <f.icon className="h-6 w-6" />
                 </div>
-                <h3 className="mb-2 text-lg font-semibold text-white">{f.title}</h3>
-                <p className="text-sm leading-relaxed text-zinc-400">{f.description}</p>
+                <h3 className="mb-2 text-lg font-semibold text-white">
+                  {f.title}
+                </h3>
+                <p className="text-sm leading-relaxed text-zinc-400">
+                  {f.description}
+                </p>
               </div>
             </motion.div>
           ))}
@@ -285,19 +484,43 @@ const Features = () => {
 
 // ─── How it Works ─────────────────────────────────────────────────────────────
 const HowItWorks = () => (
-  <section id="how-it-works" className="border-y border-white/5 bg-zinc-950 py-24">
+  <section
+    id="how-it-works"
+    className="border-y border-white/5 bg-zinc-950 py-24"
+  >
     <div className="mx-auto max-w-7xl px-6 text-center">
-      <h2 className="mb-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">Up and running in 3 steps.</h2>
-      <p className="mx-auto mb-16 max-w-lg text-zinc-400">No SDK. No code changes. Just point your traffic through Backpack.</p>
+      <h2 className="mb-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+        Up and running in 3 steps.
+      </h2>
+      <p className="mx-auto mb-16 max-w-lg text-zinc-400">
+        No SDK. No code changes. Just point your traffic through Backpack.
+      </p>
       <div className="relative grid gap-8 md:grid-cols-3">
         <div className="absolute top-8 left-[33%] right-[33%] hidden h-px bg-gradient-to-r from-emerald-500/0 via-emerald-500/40 to-emerald-500/0 md:block" />
         {[
-          { n: "1", title: "Deploy Backpack", body: "Run the Docker image anywhere — localhost, Render, Fly, Railway. Takes under 30 seconds." },
-          { n: "2", title: "Set Target URL", body: "In the dashboard, enter your backend's internal URL. Backpack proxies all traffic through." },
-          { n: "3", title: "Watch it Work", body: "Real-time metrics flow in. Cache hits rise. Threats blocked. Your backend stays clean." },
+          {
+            n: "1",
+            title: "Deploy Backpack",
+            body: "Run the Docker image anywhere — localhost, Render, Fly, Railway. Takes under 30 seconds.",
+          },
+          {
+            n: "2",
+            title: "Set Target URL",
+            body: "In the dashboard, enter your backend's internal URL. Backpack proxies all traffic through.",
+          },
+          {
+            n: "3",
+            title: "Watch it Work",
+            body: "Real-time metrics flow in. Cache hits rise. Threats blocked. Your backend stays clean.",
+          },
         ].map((s) => (
-          <motion.div key={s.n} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }} className="flex flex-col items-center">
+          <motion.div
+            key={s.n}
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="flex flex-col items-center"
+          >
             <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10 text-xl font-bold text-emerald-400">
               {s.n}
             </div>
@@ -313,12 +536,32 @@ const HowItWorks = () => (
 // ─── Comparison Table ─────────────────────────────────────────────────────────
 const CompareTable = () => {
   const rows = [
-    { feature: "Deployment", self: "Your infrastructure", cloud: "Managed globally" },
-    { feature: "Rate Limiting", self: "In-memory counters", cloud: "Redis cluster" },
-    { feature: "Cache Storage", self: "In-process LRU", cloud: "Distributed Redis" },
-    { feature: "WAF Rules", self: "Built-in patterns", cloud: "AI-enhanced rules" },
+    {
+      feature: "Deployment",
+      self: "Your infrastructure",
+      cloud: "Managed globally",
+    },
+    {
+      feature: "Rate Limiting",
+      self: "In-memory counters",
+      cloud: "Redis cluster",
+    },
+    {
+      feature: "Cache Storage",
+      self: "In-process LRU",
+      cloud: "Distributed Redis",
+    },
+    {
+      feature: "WAF Rules",
+      self: "Built-in patterns",
+      cloud: "AI-enhanced rules",
+    },
     { feature: "Dashboard", self: "✓", cloud: "✓ + Alerts & Logs" },
-    { feature: "Uptime SLA", self: "You manage it", cloud: "99.99% guaranteed" },
+    {
+      feature: "Uptime SLA",
+      self: "You manage it",
+      cloud: "99.99% guaranteed",
+    },
     { feature: "Support", self: "Community (GitHub)", cloud: "Priority email" },
     { feature: "Price", self: "$0 forever", cloud: "$9 / month" },
   ];
@@ -326,8 +569,12 @@ const CompareTable = () => {
     <section id="compare" className="bg-black py-24">
       <div className="mx-auto max-w-5xl px-6">
         <div className="mb-14 text-center">
-          <h2 className="mb-3 text-3xl font-bold text-white sm:text-4xl">Self-Host vs Cloud Pro</h2>
-          <p className="text-zinc-400">Pick what fits your scale. Switch anytime, no lock-in.</p>
+          <h2 className="mb-3 text-3xl font-bold text-white sm:text-4xl">
+            Self-Host vs Cloud Pro
+          </h2>
+          <p className="text-zinc-400">
+            Pick what fits your scale. Switch anytime, no lock-in.
+          </p>
         </div>
         <div className="overflow-hidden rounded-2xl border border-white/10">
           <div className="grid grid-cols-3 bg-zinc-900/60 px-6 py-4 text-xs font-semibold uppercase tracking-widest text-zinc-500">
@@ -336,11 +583,15 @@ const CompareTable = () => {
             <span className="text-center text-emerald-400">Cloud Pro</span>
           </div>
           {rows.map((r, i) => (
-            <div key={r.feature}
-              className={`grid grid-cols-3 border-t border-white/5 px-6 py-4 text-sm ${i % 2 === 0 ? "bg-zinc-900/20" : ""}`}>
+            <div
+              key={r.feature}
+              className={`grid grid-cols-3 border-t border-white/5 px-6 py-4 text-sm ${i % 2 === 0 ? "bg-zinc-900/20" : ""}`}
+            >
               <span className="font-medium text-zinc-400">{r.feature}</span>
               <span className="text-center text-zinc-300">{r.self}</span>
-              <span className="text-center font-medium text-emerald-300">{r.cloud}</span>
+              <span className="text-center font-medium text-emerald-300">
+                {r.cloud}
+              </span>
             </div>
           ))}
         </div>
@@ -354,50 +605,84 @@ const Pricing = () => (
   <section id="pricing" className="border-t border-white/5 bg-zinc-950 py-24">
     <div className="mx-auto max-w-7xl px-6">
       <div className="mb-16 text-center">
-        <h2 className="mb-3 text-3xl font-bold text-white sm:text-5xl">Simple pricing</h2>
+        <h2 className="mb-3 text-3xl font-bold text-white sm:text-5xl">
+          Simple pricing
+        </h2>
         <p className="text-zinc-400">Start free. No credit card required.</p>
       </div>
       <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-2">
         {/* Free */}
         <div className="rounded-3xl border border-white/10 bg-zinc-900/30 p-8 backdrop-blur-sm">
-          <h3 className="mb-2 text-2xl font-semibold text-white">Self-Hosted</h3>
+          <h3 className="mb-2 text-2xl font-semibold text-white">
+            Self-Hosted
+          </h3>
           <div className="mb-4 flex items-baseline gap-2">
             <span className="text-4xl font-bold text-white">$0</span>
             <span className="text-zinc-500">/forever</span>
           </div>
-          <p className="mb-6 border-b border-white/10 pb-6 text-sm text-zinc-500">For developers who love owning their stack.</p>
+          <p className="mb-6 border-b border-white/10 pb-6 text-sm text-zinc-500">
+            For developers who love owning their stack.
+          </p>
           <ul className="mb-8 space-y-3">
-            {["Unlimited Requests", "Basic WAF patterns", "In-memory LRU Cache", "Community support (GitHub)"].map((f) => (
-              <li key={f} className="flex items-center gap-3 text-sm text-zinc-300">
-                <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-500" /> {f}
+            {[
+              "Unlimited Requests",
+              "Basic WAF patterns",
+              "In-memory LRU Cache",
+              "Community support (GitHub)",
+            ].map((f) => (
+              <li
+                key={f}
+                className="flex items-center gap-3 text-sm text-zinc-300"
+              >
+                <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-500" />{" "}
+                {f}
               </li>
             ))}
           </ul>
-          <a href="https://github.com/Qureshi-1/Backpack-io" target="_blank"
-            className="block w-full rounded-xl bg-white/10 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-white/20">
+          <a
+            href="https://github.com/Qureshi-1/Backpack-io"
+            target="_blank"
+            className="block w-full rounded-xl bg-white/10 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-white/20"
+          >
             View on GitHub
           </a>
         </div>
         {/* Pro */}
         <div className="relative rounded-3xl border border-emerald-500/50 bg-black p-8 shadow-[0_0_60px_-20px_rgba(16,185,129,0.4)]">
           <div className="absolute right-8 top-0 -translate-y-1/2">
-            <span className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold uppercase tracking-wider text-black">Most Popular</span>
+            <span className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold uppercase tracking-wider text-black">
+              Most Popular
+            </span>
           </div>
           <h3 className="mb-2 text-2xl font-semibold text-white">Cloud Pro</h3>
           <div className="mb-4 flex items-baseline gap-2">
             <span className="text-4xl font-bold text-white">$9</span>
             <span className="text-zinc-500">/month</span>
           </div>
-          <p className="mb-6 border-b border-white/10 pb-6 text-sm text-zinc-500">For teams who want it managed globally.</p>
+          <p className="mb-6 border-b border-white/10 pb-6 text-sm text-zinc-500">
+            For teams who want it managed globally.
+          </p>
           <ul className="mb-8 space-y-3">
-            {["Everything in Free", "Redis Distributed Cache", "AI-enhanced WAF rules", "99.99% Uptime SLA", "Priority email support"].map((f) => (
-              <li key={f} className="flex items-center gap-3 text-sm text-zinc-300">
-                <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-400" /> {f}
+            {[
+              "Everything in Free",
+              "Redis Distributed Cache",
+              "AI-enhanced WAF rules",
+              "99.99% Uptime SLA",
+              "Priority email support",
+            ].map((f) => (
+              <li
+                key={f}
+                className="flex items-center gap-3 text-sm text-zinc-300"
+              >
+                <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-400" />{" "}
+                {f}
               </li>
             ))}
           </ul>
-          <Link href="/dashboard"
-            className="block w-full rounded-xl bg-emerald-500 py-3 text-center text-sm font-semibold text-black transition-colors hover:bg-emerald-400">
+          <Link
+            href="/dashboard"
+            className="block w-full rounded-xl bg-emerald-500 py-3 text-center text-sm font-semibold text-black transition-colors hover:bg-emerald-400"
+          >
             Get Started Free
           </Link>
         </div>
@@ -413,7 +698,11 @@ const FinalCTA = ({ onDemo }: { onDemo: () => void }) => (
       <div className="h-[300px] w-[700px] rounded-full bg-emerald-500/10 blur-[120px]" />
     </div>
     <div className="relative z-10 mx-auto max-w-3xl px-6 text-center">
-      <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+      >
         <h2 className="mb-6 text-4xl font-bold tracking-tight text-white sm:text-6xl">
           Your backend is one gateway <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
@@ -421,15 +710,21 @@ const FinalCTA = ({ onDemo }: { onDemo: () => void }) => (
           </span>
         </h2>
         <p className="mb-10 text-lg text-zinc-400">
-          Join developers shipping with confidence. Free to start. No credit card required.
+          Join developers shipping with confidence. Free to start. No credit
+          card required.
         </p>
         <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <Link href="/dashboard"
-            className="group flex h-14 items-center gap-2 rounded-full bg-white px-10 text-base font-semibold text-black transition-transform hover:scale-105 active:scale-95">
-            Start Free Now <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          <Link
+            href="/dashboard"
+            className="group flex h-14 items-center gap-2 rounded-full bg-white px-10 text-base font-semibold text-black transition-transform hover:scale-105 active:scale-95"
+          >
+            Start Free Now{" "}
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
-          <button onClick={onDemo}
-            className="flex h-14 items-center gap-2 rounded-full border border-zinc-700 px-8 text-base font-semibold text-white transition-colors hover:bg-zinc-900">
+          <button
+            onClick={onDemo}
+            className="flex h-14 items-center gap-2 rounded-full border border-zinc-700 px-8 text-base font-semibold text-white transition-colors hover:bg-zinc-900"
+          >
             <TerminalSquare className="h-4 w-4" /> See the Demo
           </button>
         </div>
@@ -447,34 +742,60 @@ const Footer = () => (
           <ShieldCheck className="h-5 w-5 text-emerald-500" />
           <span className="text-base font-semibold text-white">Backpack</span>
         </div>
-        <p className="text-sm leading-relaxed text-zinc-500">Zero-code API gateway. Security and speed for every backend.</p>
+        <p className="text-sm leading-relaxed text-zinc-500">
+          Zero-code API gateway. Security and speed for every backend.
+        </p>
       </div>
       {[
-        { title: "Product", links: ["Features", "Pricing", "Changelog", "Roadmap"] },
-        { title: "Developers", links: ["Documentation", "GitHub", "Docker Hub", "API Reference"] },
-        { title: "Company", links: ["About", "Blog", "Open Source", "Contact"] },
+        {
+          title: "Product",
+          links: ["Features", "Pricing", "Changelog", "Roadmap"],
+        },
+        {
+          title: "Developers",
+          links: ["Documentation", "GitHub", "Docker Hub", "API Reference"],
+        },
+        {
+          title: "Company",
+          links: ["About", "Blog", "Open Source", "Contact"],
+        },
       ].map((col) => (
         <div key={col.title}>
           <p className="mb-4 text-sm font-semibold text-white">{col.title}</p>
           <ul className="space-y-2">
             {col.links.map((l) => (
-              <li key={l}><a href="#" className="text-sm text-zinc-500 transition-colors hover:text-white">{l}</a></li>
+              <li key={l}>
+                <a
+                  href="#"
+                  className="text-sm text-zinc-500 transition-colors hover:text-white"
+                >
+                  {l}
+                </a>
+              </li>
             ))}
           </ul>
         </div>
       ))}
     </div>
     <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 border-t border-white/5 px-6 pt-8 md:flex-row">
-      <p className="text-xs text-zinc-600">&copy; {new Date().getFullYear()} Backpack.io · MIT License</p>
-      <p className="text-xs text-zinc-600">Built with ❤️ using FastAPI + Next.js + Docker</p>
+      <p className="text-xs text-zinc-600">
+        &copy; {new Date().getFullYear()} Backpack.io · MIT License
+      </p>
+      <p className="text-xs text-zinc-600">
+        Built with ❤️ using FastAPI + Next.js + Docker
+      </p>
     </div>
   </footer>
 );
 
 // ─── Floating Badge ───────────────────────────────────────────────────────────
 const Badge = () => (
-  <a href="https://antigravity.google" target="_blank" rel="noopener noreferrer"
-    className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full border border-zinc-800 bg-black/80 px-4 py-2 text-xs font-medium text-zinc-400 backdrop-blur-md transition-all hover:border-zinc-600 hover:text-white">
+  <a
+    href="https://antigravity.google"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full border border-zinc-800 bg-black/80 px-4 py-2 text-xs font-medium text-zinc-400 backdrop-blur-md transition-all hover:border-zinc-600 hover:text-white"
+  >
     <div className="h-2 w-2 animate-pulse rounded-full bg-gradient-to-r from-purple-500 to-emerald-500" />
     Made with Antigravity
   </a>

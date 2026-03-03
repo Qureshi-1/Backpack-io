@@ -50,7 +50,10 @@ export default function SignupPage() {
         {/* Left — Perks */}
         <div className="hidden md:block">
           <Link href="/" className="flex items-center gap-2 mb-10">
-            <ShieldCheck className="h-7 w-7 text-emerald-500" />
+            <ShieldCheck
+              suppressHydrationWarning
+              className="h-7 w-7 text-emerald-500"
+            />
             <span className="text-xl font-semibold text-white">Backpack</span>
           </Link>
           <h2 className="text-3xl font-bold text-white mb-3 leading-tight">
@@ -136,7 +139,12 @@ export default function SignupPage() {
                 disabled={loading}
                 className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-semibold text-black hover:bg-emerald-400 transition-colors disabled:opacity-60 mt-2"
               >
-                {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                {loading && (
+                  <Loader2
+                    suppressHydrationWarning
+                    className="h-4 w-4 animate-spin"
+                  />
+                )}
                 {loading ? "Creating account..." : "Create Free Account"}
               </button>
             </form>

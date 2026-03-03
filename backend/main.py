@@ -189,6 +189,16 @@ async def login(data: Dict[str, Any] = Body(...)):
 async def get_me(user=Depends(current_user)):
     return {"id": user["id"], "email": user["email"], "plan": user["plan"]}
 
+@app.post("/auth/upgrade")
+async def upgrade_plan(user=Depends(current_user)):
+    if user["plan"] == "pro":
+        raise HTTPException(400, "Already on Pro plan")
+    conn = get_db()
+    conn.execute("UPDATE users SET plan = 'pro' WHERE id = ?", (user["id"],))
+    conn.commit()
+    conn.close()
+    return {"status": "success", "plan": "pro"}
+
 # ── API Key Management ────────────────────────────────────────────────────────
 @app.get("/api/keys")
 async def list_keys(user=Depends(current_user)):

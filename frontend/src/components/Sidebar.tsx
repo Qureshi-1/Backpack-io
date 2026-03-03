@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Settings, Shield, Key, LogOut } from "lucide-react";
+import {
+  LayoutDashboard,
+  Settings,
+  Shield,
+  Key,
+  LogOut,
+  CreditCard,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { auth, apiFetch } from "@/lib/auth";
 
@@ -28,6 +35,7 @@ export default function Sidebar() {
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "API Keys", href: "/dashboard/api-keys", icon: Key },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
+    { name: "Billing", href: "/dashboard/billing", icon: CreditCard },
   ];
 
   const handleLogout = () => {

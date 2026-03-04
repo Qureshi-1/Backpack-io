@@ -1077,11 +1077,11 @@ const Pricing = () => {
             </h3>
             <p className="mt-1 text-sm text-zinc-400 max-w-lg">
               Are you a college student or indie developer? Share Backpack with
-              friends and get{" "}
+              friends and get a{" "}
               <strong className="text-emerald-400">
-                up to 6 months of Cloud Pro entirely free
-              </strong>
-              . Start referring right from your dashboard.
+                50% Lifetime Discount
+              </strong>{" "}
+              on all premium plans. Start referring right from your dashboard.
             </p>
           </div>
           <div className="mt-6 sm:mt-0 flex-shrink-0">

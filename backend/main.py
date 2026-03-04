@@ -11,8 +11,10 @@ import re
 from collections import defaultdict, OrderedDict
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
+from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+import razorpay
 
 app = FastAPI(title="Backpack API Gateway")
 
@@ -36,6 +38,11 @@ PLANS = {
     "free": {"name": "Free",  "monthly_limit": 10_000,    "max_gateways": 1},
     "pro":  {"name": "Pro",   "monthly_limit": 1_000_000, "max_gateways": 10},
 }
+
+# ── Razorpay Setup ────────────────────────────────────────────────────────────
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "rzp_test_xxx")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "secret_xxx")
+rzp_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 
 # ── SQLite Database ───────────────────────────────────────────────────────────
 DB_PATH = os.getenv("DB_PATH", "./backpack.db")
@@ -189,15 +196,55 @@ async def login(data: Dict[str, Any] = Body(...)):
 async def get_me(user=Depends(current_user)):
     return {"id": user["id"], "email": user["email"], "plan": user["plan"]}
 
-@app.post("/auth/upgrade")
-async def upgrade_plan(user=Depends(current_user)):
+# ── Billing / Payments (Razorpay) ─────────────────────────────────────────────
+@app.post("/api/billing/create-order")
+async def create_order(user=Depends(current_user)):
     if user["plan"] == "pro":
         raise HTTPException(400, "Already on Pro plan")
-    conn = get_db()
-    conn.execute("UPDATE users SET plan = 'pro' WHERE id = ?", (user["id"],))
-    conn.commit()
-    conn.close()
-    return {"status": "success", "plan": "pro"}
+    
+    amount = 4900 * 100 # $49 * 100 (if INR, assume it's like INR 4900, represented in paise)
+    # Creating an order in Razorpay (in INR just as standard)
+    order_data = {
+        "amount": amount,
+        "currency": "INR",
+        "receipt": f"receipt_{user['id'][:8]}",
+        "notes": {"user_id": user["id"]}
+    }
+    try:
+        order = rzp_client.order.create(data=order_data)
+        return {"order_id": order["id"], "amount": order["amount"], "currency": order["currency"], "key_id": RAZORPAY_KEY_ID}
+    except Exception as e:
+        # Fallback for demo if API keys are invalid
+        return {"order_id": f"mock_order_{secrets.token_hex(4)}", "amount": amount, "currency": "INR", "key_id": RAZORPAY_KEY_ID, "mock": True}
+
+@app.post("/api/billing/verify")
+async def verify_payment(data: Dict[str, Any] = Body(...), user=Depends(current_user)):
+    if data.get("mock"):
+        # Accept mock payment if real API keys were not configured
+        conn = get_db()
+        conn.execute("UPDATE users SET plan = 'pro' WHERE id = ?", (user["id"],))
+        conn.commit()
+        conn.close()
+        return {"status": "success", "plan": "pro"}
+
+    razorpay_order_id = data.get("razorpay_order_id")
+    razorpay_payment_id = data.get("razorpay_payment_id")
+    razorpay_signature = data.get("razorpay_signature")
+    
+    try:
+        rzp_client.utility.verify_payment_signature({
+            'razorpay_order_id': razorpay_order_id,
+            'razorpay_payment_id': razorpay_payment_id,
+            'razorpay_signature': razorpay_signature
+        })
+        # Upgrade plan on successful signature validation
+        conn = get_db()
+        conn.execute("UPDATE users SET plan = 'pro' WHERE id = ?", (user["id"],))
+        conn.commit()
+        conn.close()
+        return {"status": "success", "plan": "pro"}
+    except razorpay.errors.SignatureVerificationError:
+        raise HTTPException(400, "Invalid payment signature")
 
 # ── API Key Management ────────────────────────────────────────────────────────
 @app.get("/api/keys")

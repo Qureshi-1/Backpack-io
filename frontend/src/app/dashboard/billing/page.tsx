@@ -38,27 +38,111 @@ export default function BillingPage() {
     }
   };
 
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (document.getElementById("razorpay-js")) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement("script");
+      script.id = "razorpay-js";
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handleUpgrade = async () => {
     if (plan === "pro") return;
     setUpgrading(true);
     try {
-      // Mock stripe checkout delay
-      await new Promise((r) => setTimeout(r, 1500));
-      const res = await fetch(`${GATEWAY_URL}/auth/upgrade`, {
+      // 1. Create Order on Backend
+      const res = await fetch(`${GATEWAY_URL}/api/billing/create-order`, {
         method: "POST",
         headers: { Authorization: `Bearer ${auth.getToken()}` },
       });
-      if (res.ok) {
-        setPlan("pro");
-        window.location.reload(); // Refresh to update sidebar too
-      } else {
+
+      if (!res.ok) {
         const data = await res.json();
-        alert(data.detail || "Upgrade failed");
+        alert(data.detail || "Failed to create order");
+        setUpgrading(false);
+        return;
       }
+
+      const orderData = await res.json();
+
+      // 2. If backend uses Mock mode due to missing API keys
+      if (orderData.mock) {
+        await fetch(`${GATEWAY_URL}/api/billing/verify`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${auth.getToken()}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ mock: true }),
+        });
+        setPlan("pro");
+        window.location.reload();
+        return;
+      }
+
+      // 3. Load Razorpay and open real payment modal
+      const resLoad = await loadRazorpayScript();
+      if (!resLoad) {
+        alert("Razorpay SDK failed to load. Are you offline?");
+        setUpgrading(false);
+        return;
+      }
+
+      const options = {
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Backpack API Gateway",
+        description: "Upgrade to Pro Plan (Beta)",
+        order_id: orderData.order_id,
+        handler: async function (response: any) {
+          const verifyRes = await fetch(`${GATEWAY_URL}/api/billing/verify`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${auth.getToken()}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            }),
+          });
+          if (verifyRes.ok) {
+            setPlan("pro");
+            window.location.reload(); // Refresh immediately
+          } else {
+            alert("Payment verification failed on server");
+            setUpgrading(false);
+          }
+        },
+        prefill: {
+          name: "Founder",
+          email: "founder@startup.com",
+          contact: "9999999999",
+        },
+        theme: {
+          color: "#10b981", // Backpack emerald color
+        },
+        modal: {
+          ondismiss: function () {
+            setUpgrading(false);
+          },
+        },
+      };
+
+      const paymentObject = new (window as any).Razorpay(options);
+      paymentObject.open();
     } catch (err) {
       console.error(err);
-      alert("Something went wrong");
-    } finally {
+      alert("Something went wrong connecting to Razorpay");
       setUpgrading(false);
     }
   };
@@ -190,7 +274,7 @@ export default function BillingPage() {
               </button>
             </div>
             <p className="text-xs text-zinc-500 mt-4">
-              Secure 1-click checkout via Stripe MVP Mock.
+              Secure 1-click checkout via Razorpay (India & Global).
             </p>
           </div>
         </div>

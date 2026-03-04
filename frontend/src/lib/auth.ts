@@ -1,6 +1,6 @@
 // Auth utilities — token storage, auth headers, fetch wrapper
 
-export const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL || "http://localhost:8080";
+export const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 const TOKEN_KEY = "backpack_token";
 const SELECTED_KEY = "backpack_api_key";
 

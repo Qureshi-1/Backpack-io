@@ -24,26 +24,28 @@ app = FastAPI(title="Backport API Gateway")
 async def health_check():
     return {"status": "ok", "service": "backport-api"}
 
-ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "https://backpack-io.vercel.app",
-    "https://backport-io.vercel.app",
-    # Accept any vercel.app subdomain for previews
-]
+from starlette.middleware.base import BaseHTTPMiddleware
 
-# Pull additional origins from env (comma-separated)
-_extra = os.getenv("EXTRA_ALLOWED_ORIGINS", "")
-if _extra:
-    ALLOWED_ORIGINS += [o.strip() for o in _extra.split(",") if o.strip()]
+class CORSBypassMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        origin = request.headers.get("origin", "*")
+        # Handle preflight
+        if request.method == "OPTIONS":
+            from starlette.responses import Response as StarletteResponse
+            resp = StarletteResponse(status_code=200)
+            resp.headers["Access-Control-Allow-Origin"] = origin
+            resp.headers["Access-Control-Allow-Credentials"] = "true"
+            resp.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+            resp.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept"
+            return resp
+        response = await call_next(request)
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept"
+        return response
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_origin_regex=r"https://.*\.vercel\.app",
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app.add_middleware(CORSBypassMiddleware)
 
 # ── Auth Config ───────────────────────────────────────────────────────────────
 SECRET_KEY = os.getenv("SECRET_KEY", "backpack-secret-change-in-production")

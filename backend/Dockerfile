@@ -9,5 +9,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy all python files
 COPY *.py ./
 
-# Provide a default flexible command; actual CMD provided via docker-compose
-CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+EXPOSE 10000
+
+# Provide a default flexible command
+CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "10000"]

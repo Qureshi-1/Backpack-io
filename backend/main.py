@@ -20,6 +20,10 @@ load_dotenv() # Load variables from .env file
 
 app = FastAPI(title="Backpack API Gateway")
 
+@app.get("/")
+async def health_check():
+    return {"status": "ok", "service": "backpack-api"}
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

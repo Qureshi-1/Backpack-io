@@ -287,11 +287,12 @@ export default function BillingPage() {
             🎁 Refer & Earn (Beta)
           </h2>
           <p className="text-sm text-zinc-400 mt-1">
-            Refer 1 friend to get a 10%–25% real-time discount key. Refer 10
-            friends who upgrade to Plus/Pro, and you get the{" "}
+            Refer friends using your unique link. When they upgrade to any paid
+            plan, you get a{" "}
             <strong className="text-emerald-400">
-              Plus Plan FREE for lifetime!
-            </strong>
+              10%–25% one-time discount key
+            </strong>{" "}
+            that you can stack or use for your next monthly renewal!
           </p>
         </div>
 
@@ -325,21 +326,18 @@ export default function BillingPage() {
             </p>
           </div>
 
-          <div className="rounded-xl border border-zinc-700 bg-zinc-800/50 p-4">
+          <div className="rounded-xl border border-zinc-700 bg-zinc-800/50 p-4 flex flex-col justify-center">
             <p className="text-xs font-medium text-zinc-400 mb-2">
-              Progress to Free Plus
+              Upgraded Friends
             </p>
             <div className="flex items-end gap-2 mb-3">
               <span className="text-3xl font-bold text-white">0</span>
               <span className="text-sm font-medium text-zinc-500 mb-1">
-                / 10 Upgrades
+                Total
               </span>
             </div>
-            <div className="h-1.5 w-full bg-zinc-700 rounded-full overflow-hidden">
-              <div className="h-full bg-emerald-500 w-[5%]" />
-            </div>
-            <p className="text-[10px] text-zinc-400 mt-2">
-              10 successful premium referrals left.
+            <p className="text-xs text-zinc-400 mt-2">
+              Keep referring to collect more 1-time discount keys!
             </p>
           </div>
         </div>

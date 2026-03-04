@@ -1076,12 +1076,13 @@ const Pricing = () => {
               <span className="text-xl">🎁</span> Refer & Earn
             </h3>
             <p className="mt-1 text-sm text-zinc-400 max-w-lg">
-              Are you a college student or indie developer? Share Backpack with
-              friends and get a{" "}
+              Are you a college student or indie developer? Invite your friends
+              and{" "}
               <strong className="text-emerald-400">
-                50% Lifetime Discount
+                get 1 Month of Cloud Pro FREE
               </strong>{" "}
-              on all premium plans. Start referring right from your dashboard.
+              for every successful referral. They get a $10 credit too. Start
+              referring right from your dashboard.
             </p>
           </div>
           <div className="mt-6 sm:mt-0 flex-shrink-0">

@@ -90,11 +90,15 @@ Backpack comes with a built-in MVP Billing and Authentication system out of the 
 
 ## 📸 Screenshots
 
-|                                       Overview                                       |                                Settings & Features                                 |
-| :----------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------: |
-| ![Dashboard](https://raw.githubusercontent.com/placeholder/image/main/dashboard.png) | ![Settings](https://raw.githubusercontent.com/placeholder/image/main/settings.png) |
+> **Note:** Drop your actual product screenshots in the `public/` directory or upload them to GitHub and paste the image links here before launching on Product Hunt!
 
-_(Note: Replace placeholder image URLs with actual raw image links after uploading screenshots to GitHub)._
+### 📊 Real-time Dashboard
+
+![Dashboard Screenshot Placeholder](https://via.placeholder.com/800x450/111111/4ade80?text=Your+Epic+Dashboard+Screenshot+Here)
+
+### ⚙️ Gateway Settings
+
+![Settings Screenshot Placeholder](https://via.placeholder.com/800x450/111111/4ade80?text=Your+Settings+Screenshot+Here)
 
 ---
 

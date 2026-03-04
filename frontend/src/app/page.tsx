@@ -590,7 +590,8 @@ const ProblemSolution = () => (
           className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-8"
         >
           <div className="mb-6 flex items-center gap-2 font-semibold text-rose-400">
-            <XCircle className="h-5 w-5" /> Without Backpack
+            <XCircle suppressHydrationWarning className="h-5 w-5" /> Without
+            Backpack
           </div>
           <ul className="space-y-4">
             {[
@@ -604,7 +605,10 @@ const ProblemSolution = () => (
                 key={p}
                 className="flex items-start gap-3 text-sm text-zinc-400"
               >
-                <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-rose-500" />{" "}
+                <AlertTriangle
+                  suppressHydrationWarning
+                  className="mt-0.5 h-4 w-4 flex-shrink-0 text-rose-500"
+                />{" "}
                 {p}
               </li>
             ))}

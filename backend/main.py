@@ -2,6 +2,9 @@
 Backport API Gateway — FastAPI Backend
 All-in-one: Auth, Proxy, Rate-Limit, WAF, Cache, Billing
 """
+import sys
+print(f"✅ Python version: {sys.version}")
+
 import hashlib
 import os
 import re

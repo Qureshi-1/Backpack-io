@@ -1,38 +1,30 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import { Inter } from "next/font/google";
+import "../globals.css";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import FeedbackWidget from "@/components/FeedbackWidget";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Backport | API Gateway",
-  description: "Secure and cache your backend seamlessly",
+  description: "Protect your backend in 30 seconds with Backport.",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
-    <html
-      lang="en"
-      className="dark bg-black text-white"
-      suppressHydrationWarning
-    >
+    <html lang="en" className="dark">
       <body
-        suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen selection:bg-emerald-500/30 selection:text-emerald-200`}
+        className={`${inter.className} bg-zinc-950 text-white min-h-screen selection:bg-emerald-500/30`}
       >
-        {children}
+        <ErrorBoundary>
+          {children}
+          <FeedbackWidget />
+        </ErrorBoundary>
       </body>
     </html>
   );

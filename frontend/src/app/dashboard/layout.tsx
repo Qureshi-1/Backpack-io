@@ -1,9 +1,8 @@
 "use client";
-
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Sidebar from "@/components/Sidebar";
+import React, { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { auth } from "@/lib/auth";
+import Navbar from "@/components/Navbar";
 
 export default function DashboardLayout({
   children,
@@ -11,23 +10,30 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (!auth.isLoggedIn()) {
-      router.replace("/login");
+      router.push("/auth/login");
     }
   }, [router]);
 
-  if (typeof window !== "undefined" && !auth.isLoggedIn()) {
-    return null; // prevent flash
+  if (!mounted || !auth.isLoggedIn()) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center text-zinc-500">
+        Loading...
+      </div>
+    );
   }
 
   return (
-    <div className="flex h-screen overflow-hidden w-full">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto bg-[#0a0a0a] border-l border-zinc-800/60">
+    <div className="min-h-screen bg-zinc-950 flex flex-col">
+      <Navbar />
+      <div className="flex-1 max-w-7xl w-full mx-auto p-6 md:p-8">
         {children}
-      </main>
+      </div>
     </div>
   );
 }

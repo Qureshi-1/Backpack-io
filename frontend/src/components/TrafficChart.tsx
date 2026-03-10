@@ -9,8 +9,7 @@ import {
   YAxis,
 } from "recharts";
 import { useState, useEffect } from "react";
-
-import { apiFetch } from "@/lib/auth";
+import { fetchApi } from "@/lib/api";
 
 export default function TrafficChart() {
   const [data, setData] = useState<any[]>([]);
@@ -18,13 +17,10 @@ export default function TrafficChart() {
   useEffect(() => {
     const fetchTraffic = async () => {
       try {
-        const response = await apiFetch("/api/traffic");
-        if (response.ok) {
-          const result = await response.json();
-          setData(result.traffic_data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch traffic:", error);
+        const result = await fetchApi("/api/traffic");
+        setData(result.traffic_data ?? []);
+      } catch {
+        // silently fail — endpoint may not exist yet
       }
     };
 

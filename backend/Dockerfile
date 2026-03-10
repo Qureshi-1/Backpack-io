@@ -2,15 +2,13 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install dependencies
-COPY requirements.txt .
+# Build context is repo ROOT, Dockerfile is at /backend/Dockerfile
+# So all paths must be prefixed with backend/
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy source
-COPY . .
+COPY backend/ .
 
-# Expose port
 EXPOSE 8080
 
-# Start server
 CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}"]

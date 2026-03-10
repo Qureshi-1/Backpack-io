@@ -4,13 +4,9 @@
   publish = ".next"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20.9.0"
   NEXT_PUBLIC_API_URL = "https://backport-io.onrender.com"
+  NEXT_PUBLIC_RAZORPAY_KEY_ID = "rzp_test_SN4nHpIsCZ03FV"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200

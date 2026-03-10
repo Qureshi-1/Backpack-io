@@ -11,7 +11,8 @@ import {
   CreditCard,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { auth, apiFetch } from "@/lib/auth";
+import { auth } from "@/lib/auth";
+import { fetchApi } from "@/lib/api";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -22,8 +23,7 @@ export default function Sidebar() {
 
   useEffect(() => {
     setMounted(true);
-    apiFetch("/auth/me")
-      .then((r) => r.json())
+    fetchApi("/api/user/me")
       .then((d) => {
         setEmail(d.email);
         setPlan(d.plan);
@@ -39,8 +39,7 @@ export default function Sidebar() {
   ];
 
   const handleLogout = () => {
-    auth.removeToken();
-    router.push("/login");
+    auth.logout();
   };
 
   if (!mounted) {

@@ -143,7 +143,7 @@ const LiveMetricsCard = () => {
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-xs font-semibold text-white">
-              Backpack Gateway
+              Backport Gateway
             </span>
           </div>
           <span className="text-xs text-zinc-500">live</span>
@@ -259,7 +259,7 @@ const DEMO_LINES = [
   },
   {
     delay: 2800,
-    text: "$ docker run -p 8080:8080 -e TARGET_URL=http://your-api.com backpack/gateway",
+    text: "$ docker run -p 8080:8080 -e TARGET_URL=http://your-api.com Backport/gateway",
     color: "text-zinc-300",
   },
   {
@@ -270,7 +270,7 @@ const DEMO_LINES = [
   { delay: 4500, text: "", color: "" },
   {
     delay: 4600,
-    text: "# Step 3 \u2014 Route your requests through Backpack",
+    text: "# Step 3 \u2014 Route your requests through Backport",
     color: "text-zinc-500",
   },
   {
@@ -327,7 +327,7 @@ const DemoModal = ({ onClose }: { onClose: () => void }) => {
           <div className="h-3.5 w-3.5 rounded-full bg-yellow-400" />
           <div className="h-3.5 w-3.5 rounded-full bg-emerald-500" />
           <span className="mx-auto font-mono text-xs text-zinc-500">
-            bash — backpack demo
+            bash — Backport demo
           </span>
         </div>
         {/* Terminal body */}
@@ -578,7 +578,7 @@ const ProblemSolution = () => (
           Your backend deserves a shield.
         </h2>
         <p className="mx-auto max-w-xl text-zinc-400">
-          Without Backpack, every public API is one bad request away from a
+          Without Backport, every public API is one bad request away from a
           crisis.
         </p>
       </motion.div>
@@ -591,7 +591,7 @@ const ProblemSolution = () => (
         >
           <div className="mb-6 flex items-center gap-2 font-semibold text-rose-400">
             <XCircle suppressHydrationWarning className="h-5 w-5" /> Without
-            Backpack
+            Backport
           </div>
           <ul className="space-y-4">
             {[
@@ -623,7 +623,7 @@ const ProblemSolution = () => (
         >
           <div className="mb-6 flex items-center gap-2 font-semibold text-emerald-400">
             <ShieldCheck suppressHydrationWarning className="h-5 w-5" /> With
-            Backpack
+            Backport
           </div>
           <ul className="space-y-4">
             {[
@@ -745,20 +745,20 @@ const HowItWorks = () => (
         Up and running in 3 steps.
       </h2>
       <p className="mx-auto mb-16 max-w-lg text-zinc-400">
-        No SDK. No code changes. Just point your traffic through Backpack.
+        No SDK. No code changes. Just point your traffic through Backport.
       </p>
       <div className="relative grid gap-8 md:grid-cols-3">
         <div className="absolute top-8 left-[33%] right-[33%] hidden h-px bg-gradient-to-r from-emerald-500/0 via-emerald-500/40 to-emerald-500/0 md:block" />
         {[
           {
             n: "1",
-            title: "Deploy Backpack",
+            title: "Deploy Backport",
             body: "Run the Docker image anywhere — localhost, Render, Fly, Railway. Takes under 30 seconds.",
           },
           {
             n: "2",
             title: "Set Target URL",
-            body: "In the dashboard, enter your backend's internal URL. Backpack proxies all traffic through.",
+            body: "In the dashboard, enter your backend's internal URL. Backport proxies all traffic through.",
           },
           {
             n: "3",
@@ -1155,7 +1155,7 @@ const Footer = () => (
             suppressHydrationWarning
             className="h-5 w-5 text-emerald-500"
           />
-          <span className="text-base font-semibold text-white">Backpack</span>
+          <span className="text-base font-semibold text-white">Backport</span>
         </div>
         <p className="text-sm leading-relaxed text-zinc-500">
           Zero-code API gateway. Security and speed for every backend.

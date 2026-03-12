@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { fetchApi } from "@/lib/api";
 import { Loader2, Copy, CheckCircle2 } from "lucide-react";
 import { auth } from "@/lib/auth";
+import toast from "react-hot-toast";
 
 export default function ApiKeysPage() {
   const [keys, setKeys] = useState<any[]>([]);
@@ -32,6 +33,7 @@ export default function ApiKeysPage() {
   const handleCopy = (key: string) => {
     navigator.clipboard.writeText(key);
     setCopied(key);
+    toast.success("API Key copied to clipboard!");
     setTimeout(() => setCopied(null), 2000);
   };
 
@@ -44,8 +46,9 @@ export default function ApiKeysPage() {
         <p className="text-zinc-400">Manage your Backport gateway keys.</p>
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-        <table className="w-full text-left">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-sm transition-all hover:border-zinc-700 hover:shadow-md">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left min-w-[500px]">
           <thead className="bg-zinc-800/50 text-zinc-400 text-sm">
             <tr>
               <th className="px-6 py-4 font-medium">Name</th>
@@ -81,6 +84,7 @@ export default function ApiKeysPage() {
             ))}
           </tbody>
         </table>
+        </div>
 
         {plan === "free" && (
           <div className="p-4 bg-zinc-800/30 border-t border-zinc-800 text-sm text-zinc-400">
@@ -96,7 +100,7 @@ export default function ApiKeysPage() {
         )}
       </div>
 
-      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-6">
+      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-6 transition-colors hover:border-emerald-500/30">
         <h3 className="font-semibold text-emerald-500 mb-2">
           How to use your API Key
         </h3>

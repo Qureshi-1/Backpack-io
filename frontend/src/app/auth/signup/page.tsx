@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { fetchApi } from "@/lib/api";
 import { auth } from "@/lib/auth";
-import { ShieldCheck, Loader2 } from "lucide-react";
+import { ShieldCheck, Loader2, AlertCircle } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -16,6 +17,16 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (!email.match(/^\S+@\S+\.\S+$/)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
     setLoading(true);
     try {
       const data = await fetchApi("/api/auth/signup", {
@@ -24,9 +35,12 @@ export default function SignupPage() {
       });
       auth.setToken(data.token);
       auth.setApiKey(data.api_key);
+      toast.success("Account created successfully!");
       router.push("/dashboard");
     } catch (err: any) {
-      setError(err.message || "Signup failed");
+      const msg = err.message || "Signup failed";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -74,8 +88,9 @@ export default function SignupPage() {
           </div>
 
           {error && (
-            <div className="text-sm text-red-400 bg-red-500/10 p-3 rounded-lg border border-red-500/20">
-              {error}
+            <div className="flex items-start gap-2 text-sm text-red-500 bg-red-500/10 p-3 rounded-lg border border-red-500/20">
+              <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <span>{error}</span>
             </div>
           )}
 

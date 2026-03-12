@@ -1,13 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import { fetchApi } from "@/lib/api";
-import { Loader2, Server } from "lucide-react";
+import { Loader2, Server, AlertCircle } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function SettingsPage() {
   const [url, setUrl] = useState("");
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState({ text: "", type: "" });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetchApi("/api/user/settings")
@@ -17,23 +18,34 @@ export default function SettingsPage() {
       })
       .catch((err) => {
         console.error(err);
+        toast.error("Failed to load settings");
+      })
+      .finally(() => {
         setLoading(false);
       });
   }, []);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+
+    // Validate URL format
+    if (url && !url.match(/^https?:\/\/.+/)) {
+      setError("Please enter a valid URL starting with http:// or https://");
+      return;
+    }
+
     setSaving(true);
-    setMessage({ text: "", type: "" });
 
     try {
       await fetchApi("/api/user/settings", {
         method: "PUT",
         body: JSON.stringify({ target_backend_url: url }),
       });
-      setMessage({ text: "Settings saved successfully!", type: "success" });
+      toast.success("Settings saved successfully!");
     } catch (err: any) {
-      setMessage({ text: err.message, type: "error" });
+      setError(err.message || "Failed to save settings");
+      toast.error(err.message || "Failed to save settings");
     } finally {
       setSaving(false);
     }
@@ -48,7 +60,7 @@ export default function SettingsPage() {
         <p className="text-zinc-400">Configure your target backend URL.</p>
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 transition-colors hover:border-zinc-700 hover:bg-zinc-900/80">
         <form onSubmit={handleSave} className="space-y-6">
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-zinc-300 mb-2">
@@ -69,15 +81,10 @@ export default function SettingsPage() {
             />
           </div>
 
-          {message.text && (
-            <div
-              className={`text-sm p-4 rounded-lg border ${
-                message.type === "success"
-                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                  : "bg-red-500/10 text-red-400 border-red-500/20"
-              }`}
-            >
-              {message.text}
+          {error && (
+            <div className="flex items-start gap-2 text-sm text-red-500 bg-red-500/10 p-3 rounded-lg border border-red-500/20">
+              <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <span>{error}</span>
             </div>
           )}
 

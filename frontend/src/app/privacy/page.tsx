@@ -7,15 +7,15 @@ export const metadata = {
 
 export default function PrivacyPolicy() {
   return (
-    <div className="min-h-screen bg-black text-zinc-300">
+    <div className="min-h-screen bg-black text-gray-300">
       <Header />
-      <main className="max-w-3xl mx-auto px-6 pt-32 pb-24">
-        <h1 className="text-4xl font-bold text-white mb-4">Privacy Policy</h1>
+      <main className="max-w-4xl mx-auto px-4 py-12 pt-32">
+        <h1 className="text-4xl font-bold text-green-400 mb-4">Privacy Policy</h1>
         <p className="text-zinc-500 mb-12">Last updated: {new Date().toLocaleDateString()}</p>
         
         <div className="space-y-8 leading-relaxed">
           <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">1. Information We Collect</h2>
+            <h2 className="text-2xl font-semibold text-green-400 mb-4">1. Information We Collect</h2>
             <p>
               We collect information that you provide directly to us, including:
             </p>
@@ -26,7 +26,7 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">2. How We Use Information</h2>
+            <h2 className="text-2xl font-semibold text-green-400 mb-4">2. How We Use Information</h2>
             <p>We use the information we collect to:</p>
             <ul className="list-disc pl-5 mt-2 space-y-2">
               <li>Provide, maintain, and improve our API Gateway services.</li>
@@ -36,28 +36,28 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">3. Data Sharing</h2>
+            <h2 className="text-2xl font-semibold text-green-400 mb-4">3. Data Sharing</h2>
             <p>
               We <strong>never sell</strong> your data. We only share information with third-party service providers who need access to such information to carry out work on our behalf, such as processing payments via Razorpay.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">4. Data Security</h2>
+            <h2 className="text-2xl font-semibold text-green-400 mb-4">4. Data Security</h2>
             <p>
               We take reasonable measures to help protect information about you from loss, theft, misuse, and unauthorized access. Information is securely stored within our SQLite instances hosted on Render with industry-standard encryption practices.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">5. User Rights</h2>
+            <h2 className="text-2xl font-semibold text-green-400 mb-4">5. User Rights</h2>
             <p>
               You may update, correct, or delete your account information at any time by logging into your online dashboard or by emailing us directly.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">6. Contact Information</h2>
+            <h2 className="text-2xl font-semibold text-green-400 mb-4">6. Contact Information</h2>
             <p>
               If you have any questions about this Privacy Policy, please contact us at: <a href="mailto:founder@backport.dev" className="text-emerald-400 hover:text-emerald-300 transition-colors">founder@backport.dev</a>
             </p>

@@ -1,11 +1,12 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { fetchApi } from "@/lib/api";
 import { auth } from "@/lib/auth";
-import { ShieldCheck, Loader2, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import MatrixBackground from "@/components/MatrixBackground";
+import TypingEffect from "@/components/TypingEffect";
+import SignupCard from "@/components/SignupCard";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -47,68 +48,23 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-zinc-900/50 p-8 rounded-2xl border border-white/10 backdrop-blur-md">
-        <Link href="/" className="flex items-center justify-center gap-2 mb-8">
-          <ShieldCheck className="h-8 w-8 text-emerald-500" />
-          <span className="text-2xl font-bold text-white">Backport</span>
-        </Link>
-        <h1 className="text-2xl font-bold text-white mb-2">Create Account</h1>
-        <p className="text-zinc-400 mb-8 text-sm">
-          Free forever. No card required.
-        </p>
+    <div className="relative min-h-screen bg-black flex flex-col items-center justify-center p-4 overflow-hidden">
+      <MatrixBackground />
+      
+      <div className="absolute top-16 md:top-24 w-full text-center px-4 z-10">
+        <TypingEffect />
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-800/50 px-4 py-3 text-white focus:border-emerald-500 outline-none transition-colors"
-              placeholder="you@company.com"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-1">
-              Password
-            </label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-800/50 px-4 py-3 text-white focus:border-emerald-500 outline-none transition-colors"
-              placeholder="••••••••"
-              minLength={6}
-            />
-          </div>
-
-          {error && (
-            <div className="flex items-start gap-2 text-sm text-red-500 bg-red-500/10 p-3 rounded-lg border border-red-500/20">
-              <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-semibold py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {loading ? "Creating..." : "Sign Up"}
-          </button>
-        </form>
-        <div className="mt-6 text-center text-sm text-zinc-500">
-          Already have an account?{" "}
-          <Link href="/auth/login" className="text-emerald-400 hover:underline">
-            Log in
-          </Link>
-        </div>
+      <div className="z-10 w-full flex justify-center mt-12">
+        <SignupCard
+          email={email}
+          setEmail={setEmail}
+          password={password}
+          setPassword={setPassword}
+          error={error}
+          loading={loading}
+          onSubmit={handleSubmit}
+        />
       </div>
     </div>
   );

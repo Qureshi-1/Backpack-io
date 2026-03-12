@@ -7,7 +7,7 @@ from dependencies import get_current_user, get_db
 from config import RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET
 import secrets
 
-router = APIRouter(prefix="/api", tags=["billing"])
+router = APIRouter(prefix="/api/billing", tags=["billing"])
 
 rzp_client = None
 if RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET:
@@ -19,16 +19,26 @@ class VerifyReq(BaseModel):
     razorpay_signature: str
     mock: bool = False
 
+@router.get("/plan")
+def get_plan(user: User = Depends(get_current_user)):
+    return {
+        "plan": user.plan,
+        "email": user.email,
+        "requests_used": getattr(user, 'requests_used', 0),
+    }
+
 @router.post("/create-order")
 def create_order(user: User = Depends(get_current_user)):
     if user.plan == "pro":
         raise HTTPException(status_code=400, detail="Already on Pro plan")
-    
-    amount = 75000 # 750 INR in paise
+
+    amount = 3900  # $39 USD = 3900 INR (approx) in paise = 390000
+    amount_paise = amount * 100  # Razorpay uses paise
+
     if rzp_client:
         try:
             order_data = {
-                "amount": amount,
+                "amount": amount_paise,
                 "currency": "INR",
                 "receipt": f"rcpt_{user.id}",
                 "notes": {"user_id": str(user.id)}
@@ -40,18 +50,18 @@ def create_order(user: User = Depends(get_current_user)):
                 "currency": order["currency"],
                 "key_id": RAZORPAY_KEY_ID
             }
-        except Exception as e:
-            pass # Fallback to mock
-            
+        except Exception:
+            pass  # Fallback to mock
+
     return {
         "order_id": f"mock_{secrets.token_hex(6)}",
-        "amount": amount,
+        "amount": amount_paise,
         "currency": "INR",
         "key_id": RAZORPAY_KEY_ID or "mock_key",
         "mock": True
     }
 
-@router.post("/verify-payment")
+@router.post("/verify")
 def verify_payment(req: VerifyReq, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     if req.mock:
         user.plan = "pro"

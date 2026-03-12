@@ -80,10 +80,16 @@ export default function BillingPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchApi("/api/user/me").then((res) => {
-      setPlan(res.plan);
-      setLoading(false);
-    });
+    fetchApi("/api/user/me")
+      .then((res) => {
+        setPlan(res.plan ?? "free");
+      })
+      .catch(() => {
+        setError("Could not load billing info. Please refresh.");
+      })
+      .finally(() => {
+        setLoading(false); // ← ALWAYS runs, fixes stuck loading
+      });
   }, []);
 
   const handleUpgrade = async () => {
@@ -91,11 +97,11 @@ export default function BillingPage() {
       setProcessing(true);
       setError("");
 
-      const order = await fetchApi("/api/create-order", { method: "POST" });
+      const order = await fetchApi("/api/billing/create-order", { method: "POST" });
 
       if (order.mock) {
-        alert("Mock payment — Razorpay not configured. Upgrading to Pro.");
-        const verify = await fetchApi("/api/verify-payment", {
+        alert("🧪 Test mode: Razorpay not configured. Upgrading to Pro.");
+        const verify = await fetchApi("/api/billing/verify", {
           method: "POST",
           body: JSON.stringify({ mock: true }),
         });
@@ -112,7 +118,7 @@ export default function BillingPage() {
         description: "Backport Cloud Pro Upgrade",
         order_id: order.order_id,
         handler: async function (response: any) {
-          const verify = await fetchApi("/api/verify-payment", {
+          const verify = await fetchApi("/api/billing/verify", {
             method: "POST",
             body: JSON.stringify({
               razorpay_order_id: response.razorpay_order_id,

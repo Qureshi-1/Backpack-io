@@ -24,6 +24,7 @@ import {
   XCircle,
   AlertTriangle,
   Sparkles,
+  Menu,
 } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 
@@ -148,7 +149,7 @@ const LiveMetricsCard = () => {
           </div>
           <span className="text-xs text-zinc-500">live</span>
         </div>
-        <div className="grid grid-cols-3 divide-x divide-white/5 border-b border-white/5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/5 border-b border-white/5">
           {[
             {
               label: "Requests",
@@ -373,58 +374,100 @@ const DemoModal = ({ onClose }: { onClose: () => void }) => {
 };
 
 // ─── Header ───────────────────────────────────────────────────────────────────
-const Header = ({ onDemo }: { onDemo: () => void }) => (
-  <header
-    suppressHydrationWarning
-    className="fixed top-0 left-0 right-0 z-40 border-b border-white/5 bg-black/50 backdrop-blur-xl"
-  >
-    <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-      <div suppressHydrationWarning className="flex items-center gap-2">
-        <ShieldCheck
-          suppressHydrationWarning
-          className="h-6 w-6 text-emerald-500"
-        />
-        <span className="text-lg font-semibold tracking-tight text-white">
-          Backport
-        </span>
-      </div>
-      <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-400">
-        <a href="#features" className="hover:text-white transition-colors">
-          Features
-        </a>
-        <a href="#how-it-works" className="hover:text-white transition-colors">
-          How it Works
-        </a>
-        <a href="#compare" className="hover:text-white transition-colors">
-          Compare
-        </a>
-        <a href="#pricing" className="hover:text-white transition-colors">
-          Pricing
-        </a>
-      </nav>
-      <div className="flex items-center gap-3">
+const Header = ({ onDemo }: { onDemo: () => void }) => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  return (
+    <header
+      suppressHydrationWarning
+      className="fixed top-0 left-0 right-0 z-40 border-b border-white/5 bg-black/50 backdrop-blur-xl"
+    >
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+        <div suppressHydrationWarning className="flex items-center gap-2">
+          <ShieldCheck
+            suppressHydrationWarning
+            className="h-6 w-6 text-emerald-500"
+          />
+          <span className="text-lg font-semibold tracking-tight text-white">
+            Backport
+          </span>
+        </div>
+        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-400">
+          <a href="#features" className="hover:text-white transition-colors">
+            Features
+          </a>
+          <a href="#how-it-works" className="hover:text-white transition-colors">
+            How it Works
+          </a>
+          <a href="#compare" className="hover:text-white transition-colors">
+            Compare
+          </a>
+          <a href="#pricing" className="hover:text-white transition-colors">
+            Pricing
+          </a>
+        </nav>
+        <div className="hidden md:flex items-center gap-3">
+          <button
+            onClick={onDemo}
+            className="text-sm font-medium text-zinc-400 hover:text-white transition-colors"
+          >
+            Demo
+          </button>
+          <Link
+            href="/auth/login"
+            className="text-sm font-medium text-zinc-400 hover:text-white transition-colors"
+          >
+            Log in
+          </Link>
+          <Link
+            href="/auth/signup"
+            className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-black transition-all shadow-[0_0_15px_rgba(0,255,135,0.3)] hover:shadow-[0_0_30px_rgba(0,255,135,0.6)] hover:-translate-y-[2px]"
+          >
+            Start Free
+          </Link>
+        </div>
         <button
-          onClick={onDemo}
-          className="hidden md:block text-sm font-medium text-zinc-400 hover:text-white transition-colors"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden text-zinc-400 hover:text-white transition-colors"
         >
-          Demo
+          {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
-        <Link
-          href="/auth/login"
-          className="hidden md:block text-sm font-medium text-zinc-400 hover:text-white transition-colors"
-        >
-          Log in
-        </Link>
-        <Link
-          href="/auth/signup"
-          className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-black hover:scale-105 active:scale-95 transition-transform"
-        >
-          Start Free
-        </Link>
       </div>
-    </div>
-  </header>
-);
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="md:hidden border-t border-white/5 bg-black/95 backdrop-blur-xl overflow-hidden"
+          >
+            <div className="flex flex-col gap-4 px-6 py-6">
+              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-zinc-400 hover:text-white">Features</a>
+              <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-zinc-400 hover:text-white">How it Works</a>
+              <a href="#compare" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-zinc-400 hover:text-white">Compare</a>
+              <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-zinc-400 hover:text-white">Pricing</a>
+              <div className="h-px bg-white/5 my-2" />
+              <button
+                onClick={() => { onDemo(); setMobileMenuOpen(false); }}
+                className="text-left text-sm font-medium text-zinc-400 hover:text-white"
+              >
+                Watch Demo
+              </button>
+              <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-zinc-400 hover:text-white">Log in</Link>
+              <Link
+                href="/auth/signup"
+                onClick={() => setMobileMenuOpen(false)}
+                className="mt-2 text-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-black transition-all shadow-[0_0_15px_rgba(0,255,135,0.3)] hover:shadow-[0_0_30px_rgba(0,255,135,0.6)] hover:-translate-y-[2px]"
+              >
+                Start Free
+              </Link>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </header>
+  );
+};
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 const Hero = ({ onDemo }: { onDemo: () => void }) => (
@@ -475,7 +518,7 @@ const Hero = ({ onDemo }: { onDemo: () => void }) => (
           >
             <Link
               href="/auth/signup"
-              className="group flex h-12 items-center gap-2 rounded-full bg-white px-8 text-sm font-semibold text-black hover:scale-105 active:scale-95 transition-all"
+              className="group flex h-12 items-center gap-2 rounded-full bg-white px-8 text-sm font-semibold text-black transition-all shadow-[0_0_15px_rgba(0,255,135,0.3)] hover:shadow-[0_0_30px_rgba(0,255,135,0.6)] hover:-translate-y-[2px]"
             >
               Start Free{" "}
               <ArrowRight
@@ -901,7 +944,7 @@ const Pricing = () => {
           </div>
         </div>
 
-        <div className="mx-auto grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mx-auto grid gap-[30px] md:grid-cols-2 lg:grid-cols-4">
           {/* Free */}
           <div className="rounded-3xl border border-white/10 bg-zinc-900/30 p-8 backdrop-blur-sm lg:p-6 flex flex-col">
             <h3 className="mb-2 text-xl font-semibold text-white">Hobby</h3>
@@ -1023,7 +1066,7 @@ const Pricing = () => {
             </ul>
             <Link
               href="/dashboard"
-              className="mt-auto block w-full rounded-xl bg-emerald-500 py-2.5 text-center text-sm font-semibold text-black transition-colors hover:bg-emerald-400"
+              className="mt-auto block w-full rounded-xl bg-emerald-500 py-2.5 text-center text-sm font-semibold text-black transition-all shadow-[0_0_15px_rgba(0,255,135,0.3)] hover:shadow-[0_0_30px_rgba(0,255,135,0.6)] hover:-translate-y-[2px] hover:bg-emerald-400"
             >
               Get Started Free
             </Link>
@@ -1124,7 +1167,7 @@ const FinalCTA = ({ onDemo }: { onDemo: () => void }) => (
         <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Link
             href="/dashboard"
-            className="group flex h-14 items-center gap-2 rounded-full bg-white px-10 text-base font-semibold text-black transition-transform hover:scale-105 active:scale-95"
+            className="group flex h-14 items-center gap-2 rounded-full bg-white px-10 text-base font-semibold text-black transition-all shadow-[0_0_15px_rgba(0,255,135,0.3)] hover:shadow-[0_0_30px_rgba(0,255,135,0.6)] hover:-translate-y-[2px]"
           >
             Start Free Now{" "}
             <ArrowRight
@@ -1147,7 +1190,7 @@ const FinalCTA = ({ onDemo }: { onDemo: () => void }) => (
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
 const Footer = () => (
-  <footer className="border-t border-white/10 bg-black pb-8 pt-16">
+  <footer className="border-t border-white/10 bg-black pb-8 pt-[50px] mt-[50px]">
     <div className="mx-auto mb-12 grid max-w-7xl gap-10 px-6 md:grid-cols-4">
       <div>
         <div className="mb-4 flex items-center gap-2">

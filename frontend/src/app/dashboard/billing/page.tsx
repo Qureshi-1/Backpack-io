@@ -76,7 +76,7 @@ const PLANS = [
 export default function BillingPage() {
   const [plan, setPlan] = useState("");
   const [loading, setLoading] = useState(true);
-  const [processing, setProcessing] = useState(false);
+  const [processingPlan, setProcessingPlan] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -92,9 +92,9 @@ export default function BillingPage() {
       });
   }, []);
 
-  const handleUpgrade = async () => {
+  const handleUpgrade = async (planId: string) => {
     try {
-      setProcessing(true);
+      setProcessingPlan(planId);
       setError("");
 
       const order = await fetchApi("/api/billing/create-order", { method: "POST" });
@@ -106,7 +106,7 @@ export default function BillingPage() {
           body: JSON.stringify({ mock: true }),
         });
         setPlan(verify.plan);
-        setProcessing(false);
+        setProcessingPlan(null);
         return;
       }
 
@@ -139,7 +139,7 @@ export default function BillingPage() {
     } catch (err: any) {
       setError(err.message || "Could not initiate payment");
     } finally {
-      setProcessing(false);
+      setProcessingPlan(null);
     }
   };
 
@@ -212,12 +212,12 @@ export default function BillingPage() {
               {/* CTA Button */}
               {isClickable ? (
                 <button
-                  onClick={handleUpgrade}
-                  disabled={processing}
+                  onClick={() => handleUpgrade(p.id)}
+                  disabled={processingPlan === p.id}
                   className="w-full bg-emerald-500 hover:bg-emerald-400 text-black text-sm font-semibold py-2.5 rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
                 >
-                  {processing && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {processing ? "Processing..." : p.cta}
+                  {processingPlan === p.id && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {processingPlan === p.id ? "Processing..." : p.cta}
                 </button>
               ) : p.id === "enterprise" ? (
                 <a
@@ -232,10 +232,12 @@ export default function BillingPage() {
                 </div>
               ) : (
                 <button
-                  onClick={handleUpgrade}
-                  className="w-full border border-zinc-700 hover:border-zinc-500 text-white text-sm font-medium py-2.5 rounded-xl transition-colors"
+                  onClick={() => handleUpgrade(p.id)}
+                  disabled={processingPlan === p.id}
+                  className="w-full border border-zinc-700 flex justify-center items-center gap-2 hover:border-zinc-500 text-white text-sm font-medium py-2.5 rounded-xl transition-colors disabled:opacity-50"
                 >
-                  {p.cta}
+                  {processingPlan === p.id && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {processingPlan === p.id ? "Processing..." : p.cta}
                 </button>
               )}
             </div>

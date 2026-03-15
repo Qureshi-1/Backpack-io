@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from models import User, Feedback
+from models import User, Feedback, ApiKey
 from dependencies import get_current_user, get_db
 
 router = APIRouter(prefix="/api/user", tags=["user"])
@@ -12,6 +12,9 @@ class SettingsUpdate(BaseModel):
     caching_enabled: bool = False
     idempotency_enabled: bool = True
     waf_enabled: bool = False
+
+class ApiKeyCreate(BaseModel):
+    name: str
 
 @router.get("/me")
 def get_me(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -27,7 +30,8 @@ def get_me(user: User = Depends(get_current_user), db: Session = Depends(get_db)
     return {
         "id": user.id,
         "email": user.email,
-        "api_key": user.api_key,
+        "api_keys": [{"id": k.id, "name": k.name, "key": k.key, "created_at": k.created_at} for k in user.api_keys],
+        "api_key": user.api_keys[0].key if user.api_keys else None,
         "plan": user.plan,
         "target_backend_url": user.target_backend_url,
         "created_at": user.created_at,
@@ -64,3 +68,36 @@ def update_settings(data: SettingsUpdate, user: User = Depends(get_current_user)
 def get_user_feedback(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     feedbacks = db.query(Feedback).filter(Feedback.user_id == user.id).order_by(Feedback.created_at.desc()).all()
     return feedbacks
+
+@router.get("/keys")
+def get_api_keys(user: User = Depends(get_current_user)):
+    return [{"id": k.id, "name": k.name, "key": k.key, "created_at": k.created_at} for k in user.api_keys]
+
+@router.post("/keys")
+def create_api_key(data: ApiKeyCreate, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # Limit check
+    max_keys = 3 if user.plan == "pro" else 1
+    if len(user.api_keys) >= max_keys:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=f"Plan limit reached: Max {max_keys} keys for {user.plan} plan")
+    
+    new_key = ApiKey(user_id=user.id, name=data.name)
+    db.add(new_key)
+    db.commit()
+    return {"status": "success", "key": new_key.key}
+
+@router.delete("/keys/{key_id}")
+def delete_api_key(key_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    key_obj = db.query(ApiKey).filter(ApiKey.id == key_id, ApiKey.user_id == user.id).first()
+    if not key_obj:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Key not found")
+    
+    # Don't allow deleting the last key
+    if len(user.api_keys) <= 1:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="Cannot delete your only API key")
+        
+    db.delete(key_obj)
+    db.commit()
+    return {"status": "success"}

@@ -14,7 +14,8 @@ _rate_limits = {} # format: { user_id: [timestamps] }
 _idempotency_keys = {} # format: { "user_id:idemp_key": (status, content, headers) }
 
 @router.api_route("/proxy/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
-async def proxy_route(request: Request, path: str, background_tasks: BackgroundTasks, user: User = Depends(get_proxy_user), db: Session = Depends(get_db)):
+async def proxy_route(request: Request, path: str, background_tasks: BackgroundTasks, data: tuple = Depends(get_proxy_user), db: Session = Depends(get_db)):
+    user, api_key_obj = data
     start_time = time.time()
     
     # 1. Check WAF (Web Application Firewall)
@@ -27,7 +28,7 @@ async def proxy_route(request: Request, path: str, background_tasks: BackgroundT
         malicious_patterns = ["drop table", "select *", "<script>", "union select", "1=1", "exec("]
         if any(p in body_str or p in path_lower or p in query_str for p in malicious_patterns):
             latency = int((time.time() - start_time) * 1000)
-            background_tasks.add_task(save_log, db, user.id, request.method, f"/{path}", 403, latency, False)
+            background_tasks.add_task(save_log, db, user.id, api_key_obj.id, request.method, f"/{path}", 403, latency, False)
             raise HTTPException(status_code=403, detail="WAF Blocked: Malicious payload detected")
             
     # 2. Check Rate Limiting (60 requests per minute)
@@ -37,7 +38,7 @@ async def proxy_route(request: Request, path: str, background_tasks: BackgroundT
         user_reqs = [t for t in user_reqs if now - t < 60] # Keep last 60 seconds of history
         if len(user_reqs) >= 60:
             latency = int((time.time() - start_time) * 1000)
-            background_tasks.add_task(save_log, db, user.id, request.method, f"/{path}", 429, latency, False)
+            background_tasks.add_task(save_log, db, user.id, api_key_obj.id, request.method, f"/{path}", 429, latency, False)
             raise HTTPException(status_code=429, detail="Rate Limit Exceeded: Max 60 requests/minute on Free tier")
         user_reqs.append(now)
         _rate_limits[user.id] = user_reqs
@@ -66,7 +67,7 @@ async def proxy_route(request: Request, path: str, background_tasks: BackgroundT
             cache_ts, c_status, c_content, c_headers = _lru_cache[cache_key]
             if time.time() - cache_ts < 300: # 5 minute cache expiration
                 latency = int((time.time() - start_time) * 1000)
-                background_tasks.add_task(save_log, db, user.id, request.method, f"/{path}", c_status, latency, True)
+                background_tasks.add_task(save_log, db, user.id, api_key_obj.id, request.method, f"/{path}", c_status, latency, True)
                 return Response(content=c_content, status_code=c_status, headers=c_headers)
                 
     # 4. Check Idempotency (POST/PUT/PATCH only)
@@ -74,7 +75,7 @@ async def proxy_route(request: Request, path: str, background_tasks: BackgroundT
         if idempotency_store_key in _idempotency_keys:
             c_status, c_content, c_headers = _idempotency_keys[idempotency_store_key]
             latency = int((time.time() - start_time) * 1000)
-            background_tasks.add_task(save_log, db, user.id, request.method, f"/{path}", c_status, latency, True)
+            background_tasks.add_task(save_log, db, user.id, api_key_obj.id, request.method, f"/{path}", c_status, latency, True)
             return Response(content=c_content, status_code=c_status, headers=c_headers)
     body = await request.body()
     
@@ -98,15 +99,15 @@ async def proxy_route(request: Request, path: str, background_tasks: BackgroundT
                 _idempotency_keys[idempotency_store_key] = (resp.status_code, resp.content, resp_headers)
             
             latency = int((time.time() - start_time) * 1000)
-            background_tasks.add_task(save_log, db, user.id, request.method, f"/{path}", resp.status_code, latency, False)
+            background_tasks.add_task(save_log, db, user.id, api_key_obj.id, request.method, f"/{path}", resp.status_code, latency, False)
             
             return Response(content=resp.content, status_code=resp.status_code, headers=resp_headers)
     except Exception as e:
         latency = int((time.time() - start_time) * 1000)
-        background_tasks.add_task(save_log, db, user.id, request.method, f"/{path}", 502, latency, False)
+        background_tasks.add_task(save_log, db, user.id, api_key_obj.id, request.method, f"/{path}", 502, latency, False)
         raise HTTPException(status_code=502, detail=f"Bad Gateway: Error communicating with target backend - {str(e)}")
 
-def save_log(db: Session, user_id: int, method: str, path: str, status_code: int, latency_ms: int, was_cached: bool):
-    log = ApiLog(user_id=user_id, method=method, path=path, status_code=status_code, latency_ms=latency_ms, was_cached=was_cached)
+def save_log(db: Session, user_id: int, api_key_id: int, method: str, path: str, status_code: int, latency_ms: int, was_cached: bool):
+    log = ApiLog(user_id=user_id, api_key_id=api_key_id, method=method, path=path, status_code=status_code, latency_ms=latency_ms, was_cached=was_cached)
     db.add(log)
     db.commit()

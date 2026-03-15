@@ -9,7 +9,8 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    api_key = Column(String, unique=True, index=True, nullable=False, default=lambda: "bk_" + secrets.token_urlsafe(16))
+    # Deprecated: api_key is now handled by ApiKey model
+    api_key = Column(String, unique=True, index=True, nullable=True) 
     plan = Column(String, default="free")
     target_backend_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
@@ -21,6 +22,17 @@ class User(Base):
     waf_enabled = Column(Boolean, default=False)
     
     feedbacks = relationship("Feedback", back_populates="user")
+    api_keys = relationship("ApiKey", back_populates="user", cascade="all, delete-orphan")
+
+class ApiKey(Base):
+    __tablename__ = "api_keys"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    name = Column(String, default="Default Gateway")
+    key = Column(String, unique=True, index=True, nullable=False, default=lambda: "bk_" + secrets.token_urlsafe(16))
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    
+    user = relationship("User", back_populates="api_keys")
 
 class Feedback(Base):
     __tablename__ = "feedbacks"
@@ -39,6 +51,7 @@ class ApiLog(Base):
     __tablename__ = "api_logs"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
+    api_key_id = Column(Integer, ForeignKey("api_keys.id"), nullable=True)
     method = Column(String, nullable=False)
     path = Column(String, nullable=False)
     status_code = Column(Integer, nullable=False)
@@ -47,3 +60,4 @@ class ApiLog(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     
     user = relationship("User")
+    api_key = relationship("ApiKey")

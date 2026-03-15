@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from jose import jwt
-from models import User
+from models import User, ApiKey
 from dependencies import get_db
 from config import SECRET_KEY, ALGORITHM, TOKEN_EXPIRE_MINUTES, ADMIN_EMAIL
 
@@ -43,8 +43,13 @@ def signup(req: AuthReq, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
     
+    # Create default API key
+    new_key = ApiKey(user_id=user.id, name="Default Gateway")
+    db.add(new_key)
+    db.commit()
+    
     token = create_access_token(data={"sub": str(user.id), "email": user.email})
-    return {"token": token, "api_key": user.api_key, "email": user.email}
+    return {"token": token, "api_key": new_key.key, "email": user.email}
 
 @router.post("/login")
 def login(req: AuthReq, db: Session = Depends(get_db)):
@@ -53,4 +58,8 @@ def login(req: AuthReq, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid email or password")
         
     token = create_access_token(data={"sub": str(user.id), "email": user.email})
-    return {"token": token, "api_key": user.api_key, "email": user.email}
+    
+    # Get first API key
+    api_key = user.api_keys[0].key if user.api_keys else None
+    
+    return {"token": token, "api_key": api_key, "email": user.email}

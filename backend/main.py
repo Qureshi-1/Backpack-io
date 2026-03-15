@@ -21,14 +21,27 @@ async def startup():
         # Auto-migrate new columns
         with engine.begin() as conn:
             from sqlalchemy import text
-            for col, dev_val in [("rate_limit_enabled", "true"), ("caching_enabled", "false"), ("idempotency_enabled", "true"), ("waf_enabled", "false")]:
+            for col, dev_val in [("rate_limit_enabled", "true"), ("caching_enabled", "false"), ("idempotency_enabled", "true"), ("waf_enabled", "false"), ("api_key", "null")]:
                 try:
                     conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} BOOLEAN DEFAULT {dev_val}"))
                 except Exception:
                     pass
-        # Auto-set Admin — always run on startup
+
+        # Migrate API Keys to new table
         with SessionLocal() as db:
-            from models import User
+            from models import User, ApiKey
+            users = db.query(User).all()
+            for u in users:
+                if u.api_key:
+                    # Check if they already have keys in the new table
+                    existing_key = db.query(ApiKey).filter(ApiKey.user_id == u.id).first()
+                    if not existing_key:
+                        new_key = ApiKey(user_id=u.id, key=u.api_key, name="Default Gateway")
+                        db.add(new_key)
+                        db.commit()
+                        print(f"🔑 Migrated API Key for {u.email}")
+            
+            # Auto-set Admin — always run on startup
             admin_user = db.query(User).filter(User.email == ADMIN_EMAIL).first()
             if admin_user:
                 admin_user.is_admin = True

@@ -409,9 +409,8 @@ const Hero = ({ onDemo }: { onDemo: () => void }) => (
           >
             Shield your
             <br />
-            {/* Fallback space + text in case JS is disabled or fails */}
-            <span className="inline-block min-w-[200px]">
-              <TypewriterText />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
+              Backend API
             </span>
             <br />
             <span className="text-white">in 30 seconds.</span>
@@ -431,7 +430,7 @@ const Hero = ({ onDemo }: { onDemo: () => void }) => (
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="mt-10 flex flex-col sm:flex-row items-start gap-4"
+            className="mt-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6"
           >
             <Link
               href="/auth/signup"
@@ -473,11 +472,8 @@ const Hero = ({ onDemo }: { onDemo: () => void }) => (
               </svg>
               Star
             </a>
-            <span className="flex items-center rounded-md bg-emerald-500/10 px-2 py-1 font-medium text-emerald-400">
-              MIT Licensed
-            </span>
-            <span className="flex items-center rounded-md bg-zinc-800/50 px-2 py-1 font-medium text-zinc-300">
-              Open Source
+            <span className="flex items-center rounded-md bg-emerald-500/10 px-3 py-1.5 font-medium text-emerald-400">
+              ⭐ MIT Licensed • Open Source
             </span>
           </motion.div>
         </div>
@@ -725,7 +721,7 @@ const HowItWorks = () => (
         <div className="absolute top-8 left-[33%] right-[33%] hidden h-px bg-gradient-to-r from-emerald-500/0 via-emerald-500/40 to-emerald-500/0 md:block" />
         {[
           {
-            icon: Activity,
+            n: "1",
             title: "Multi-Environment",
             body: "Run the Docker image anywhere — Render, Fly, Railway, AWS. Takes under 30 seconds.",
           },
@@ -789,7 +785,7 @@ const CompareTable = () => {
       cloud: "99.9% guaranteed",
     },
     { feature: "Support", self: "Community (GitHub)", cloud: "Priority email" },
-    { feature: "Price", self: "$0 forever", cloud: "$39 / month" },
+    { feature: "Price", self: "$0 forever", cloud: "$31 / month" },
   ];
   return (
     <section id="compare" className="bg-black py-24">
@@ -1121,17 +1117,7 @@ const FinalCTA = ({ onDemo }: { onDemo: () => void }) => (
 // (Footer is imported from @/components/Footer)
 
 // ─── Floating Badge ───────────────────────────────────────────────────────────
-const Badge = () => (
-  <a
-    href="https://antigravity.google"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full border border-zinc-800 bg-black/80 px-4 py-2 text-xs font-medium text-zinc-400 backdrop-blur-md transition-all hover:border-zinc-600 hover:text-white"
-  >
-    <div className="h-2 w-2 animate-pulse rounded-full bg-gradient-to-r from-purple-500 to-emerald-500" />
-    Made with Antigravity
-  </a>
-);
+const Badge = () => null;
 
 // ─── Competitor Compare ───────────────────────────────────────────────────────
 const CompetitorCompare = () => {
@@ -1286,10 +1272,9 @@ const ArchitectureDiagram = () => (
 const CodeExample = () => (
   <section id="demo" className="bg-black py-16 md:py-24 border-y border-white/5">
     <div className="mx-auto max-w-4xl px-4 sm:px-6">
-      {/* Demo Video Placeholder */}
-      <div className="mb-12 rounded-2xl border-2 border-dashed border-zinc-800 bg-zinc-900/30 p-10 text-center flex flex-col items-center justify-center">
-        <h3 className="text-xl font-bold text-emerald-400 mb-2">📹 Full Demo Video — Coming Soon</h3>
-        <p className="text-zinc-400">Watch: Signup → Add Gateway → Block First Attack (2 min)</p>
+      <div className="mb-12 rounded-2xl border-2 border-dashed border-emerald-500/20 bg-emerald-500/5 p-10 text-center flex flex-col items-center justify-center">
+        <h3 className="text-xl font-bold text-emerald-400 mb-2">⚡ Simple 3-Step Setup</h3>
+        <p className="text-zinc-400">Deploy Gateway → Add Target URL → Zero Code Changes in Backend.</p>
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-zinc-950 overflow-hidden shadow-2xl">
@@ -1309,10 +1294,8 @@ const CodeExample = () => (
 <br />
 <code className="text-zinc-500"># Step 3: Route traffic through Backport</code>
 <br />
-<br />
-<code className="text-emerald-400">curl</code> -X GET https://backport-io.onrender.com/proxy/users \
+<code className="text-emerald-400">curl</code> -X GET https://backport-io.vercel.app/api/proxy/users \
   -H <code className="text-emerald-300">"X-API-Key: bk_YOUR_API_KEY"</code>
-<br />
 <br />
 <code className="text-emerald-500 font-bold"># That's it! Your backend is now protected.</code>
           </pre>
@@ -1467,7 +1450,6 @@ export default function LandingPage() {
         <FAQ />
       </main>
       <Footer />
-      <Badge />
     </div>
   );
 }

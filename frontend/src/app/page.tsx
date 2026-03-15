@@ -816,12 +816,12 @@ const Pricing = () => {
               <span className="text-sm text-zinc-500">/forever</span>
             </div>
             <p className="mb-6 border-b border-white/10 pb-6 text-sm text-zinc-500 min-h-[60px]">
-              Perfect for side projects or self-hosting lovers.
+              Perfect for side projects or early stage applications.
             </p>
             <ul className="mb-8 space-y-3">
               {[
                 "10,000 Requests / month",
-                "Or Self-host for unlimited",
+                "Community driven WAF",
                 "Basic WAF patterns",
                 "In-memory Cache",
                 "Community support",
@@ -1313,7 +1313,7 @@ const FAQ = () => {
     },
     {
       q: "What happens if Backport goes down?",
-      a: "Cloud instances have 99.9% uptime SLA. Self-hosted users can enable bypass mode to fail-open.",
+      a: "Cloud instances have 99.9% uptime SLA and run in a highly available setup.",
     },
     {
       q: "Can I migrate away easily?",

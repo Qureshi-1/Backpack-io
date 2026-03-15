@@ -1,12 +1,12 @@
 <div align="center">
-  <img src="https://backportio.netlify.app/logo.png" alt="Backport Logo" width="120" />
+  <img src="https://backport-io.vercel.app/logo.png" alt="Backport Logo" width="120" />
   <h1>Backport Gateway</h1>
   <p><b>Shield your API in 30 seconds. No code changes required.</b></p>
 
   <p>
     <a href="https://github.com/Qureshi-1/Backport-io/stargazers"><img src="https://img.shields.io/github/stars/Qureshi-1/Backport-io?style=flat-square&color=10b981" alt="Stars" /></a>
     <a href="https://github.com/Qureshi-1/Backport-io/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Qureshi-1/Backport-io?style=flat-square&color=10b981" alt="License" /></a>
-    <a href="https://backportio.netlify.app"><img src="https://img.shields.io/badge/Website-Live-10b981?style=flat-square" alt="Website" /></a>
+    <a href="https://backport-io.vercel.app"><img src="https://img.shields.io/badge/Website-Live-10b981?style=flat-square" alt="Website" /></a>
   </p>
 </div>
 
@@ -68,12 +68,12 @@ curl https://backport-io.onrender.com/api/analytics
 
 ## 📖 Documentation Outline
 
-Full documentation is available at [docs.backport.dev](https://backportio.netlify.app).
+Full documentation is available at [docs.backport.dev](https://backport-io.vercel.app).
 1. **Introduction:** Architecture and Philosophy
 2. **Getting Started:** Docker, Railway, and Render deployments
 3. **Core Features:** Rate Limiting, Caching, WAF, Idempotency configurations
 4. **Dashboard:** Setting up your API Keys and Domains
-5. **Self-Hosting:** Environment variables and SQLite/Redis setup
+5. **Cloud Deployment:** Environment variables and setup
 6. **Contributing:** How to build locally and submit PRs
 
 ## ⚖️ License

@@ -10,10 +10,10 @@ const PLANS = [
     name: "Hobby",
     price: "$0",
     period: "/forever",
-    desc: "Perfect for side projects or self-hosting lovers.",
+    desc: "Perfect for side projects or early stage applications.",
     features: [
       "10,000 Requests / month",
-      "Or Self-host for unlimited",
+      "Community driven WAF",
       "Basic WAF patterns",
       "In-memory Cache",
       "Community support",

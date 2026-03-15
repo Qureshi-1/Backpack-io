@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List
 from models import User, Feedback, ApiLog
 from dependencies import get_current_admin, get_db
 from pydantic import BaseModel
+from config import ADMIN_SECRET
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -48,3 +49,25 @@ def update_user_plan(data: UserUpdate, admin: User = Depends(get_current_admin),
 def list_all_feedbacks(admin: User = Depends(get_current_admin), db: Session = Depends(get_db)):
     feedbacks = db.query(Feedback).order_by(Feedback.created_at.desc()).all()
     return feedbacks
+
+# ─── Bootstrap Admin (one-time setup, secured by secret) ─────────────────────
+@router.get("/bootstrap")
+def bootstrap_admin(
+    email: str = Query(...),
+    secret: str = Query(...),
+    db: Session = Depends(get_db)
+):
+    if secret != ADMIN_SECRET:
+        raise HTTPException(status_code=403, detail="Invalid secret")
+    
+    target_user = db.query(User).filter(User.email == email).first()
+    if not target_user:
+        raise HTTPException(status_code=404, detail=f"No user found with email: {email}")
+    
+    target_user.is_admin = True
+    db.commit()
+    return {
+        "status": "success",
+        "message": f"✅ {email} is now an admin. Please refresh your dashboard."
+    }
+

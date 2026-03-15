@@ -16,4 +16,5 @@ CORS_ORIGINS_STR = os.getenv("CORS_ORIGINS", FRONTEND_URL)
 CORS_ORIGINS = [o.strip().strip('"').strip("'").rstrip("/") for o in CORS_ORIGINS_STR.split(",") if o.strip()]
 
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@backport.dev")
+ADMIN_SECRET = os.getenv("ADMIN_SECRET", "backport-admin-secret-2026")
 PORT = int(os.getenv("PORT", 8080))

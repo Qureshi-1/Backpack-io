@@ -409,8 +409,9 @@ const Hero = ({ onDemo }: { onDemo: () => void }) => (
           >
             Shield your
             <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
-              Backend API
+            {/* Fallback space + text in case JS is disabled or fails */}
+            <span className="inline-block min-w-[200px]">
+              <TypewriterText />
             </span>
             <br />
             <span className="text-white">in 30 seconds.</span>

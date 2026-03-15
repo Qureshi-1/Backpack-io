@@ -3,10 +3,10 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-from config import CORS_ORIGINS
-from database import engine, Base
+from database import engine, Base, SessionLocal
 import models
-import auth, user, payment, feedback, proxy
+import auth, user, payment, feedback, proxy, admin
+from config import CORS_ORIGINS, ADMIN_EMAIL
 
 print(f"✅ Starting Backport Gateway | Python {sys.version}")
 
@@ -26,6 +26,14 @@ async def startup():
                     conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} BOOLEAN DEFAULT {dev_val}"))
                 except Exception:
                     pass
+        # Auto-set Admin
+        with SessionLocal() as db:
+            from models import User
+            admin_user = db.query(User).filter(User.email == ADMIN_EMAIL).first()
+            if admin_user and not admin_user.is_admin:
+                admin_user.is_admin = True
+                db.commit()
+                print(f"👑 Admin privileges granted to {ADMIN_EMAIL}")
     except Exception as e:
         print(f"⚠️  DB init warning: {e}")
 
@@ -75,6 +83,7 @@ app.include_router(auth.router)
 app.include_router(user.router)
 app.include_router(payment.router)
 app.include_router(feedback.router)
+app.include_router(admin.router)
 
 # Proxy route MUST be included so it operates at /proxy/
 app.include_router(proxy.router)

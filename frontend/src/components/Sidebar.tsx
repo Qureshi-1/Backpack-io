@@ -9,6 +9,7 @@ import {
   Key,
   LogOut,
   CreditCard,
+  Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { auth } from "@/lib/auth";
@@ -20,6 +21,7 @@ export default function Sidebar() {
   const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState("");
   const [plan, setPlan] = useState("free");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -27,6 +29,7 @@ export default function Sidebar() {
       .then((d) => {
         setEmail(d.email);
         setPlan(d.plan);
+        setIsAdmin(d.is_admin);
       })
       .catch(() => {});
   }, []);
@@ -37,6 +40,10 @@ export default function Sidebar() {
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
     { name: "Billing", href: "/dashboard/billing", icon: CreditCard },
   ];
+
+  if (isAdmin) {
+    links.push({ name: "Admin", href: "/dashboard/admin", icon: Users });
+  }
 
   const handleLogout = () => {
     auth.logout();

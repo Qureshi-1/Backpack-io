@@ -539,10 +539,10 @@ const VideoDemo = () => (
         className="mb-12"
       >
         <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400 mb-4">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" /> 2-Minute Tour
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" /> Step-by-Step Guide
         </span>
-        <h2 className="text-3xl font-bold text-white sm:text-4xl mb-4">See Backport in Action</h2>
-        <p className="text-zinc-400 max-w-2xl mx-auto">See how easy it is to setup rate limiting and WAF without writing a single line of backend code.</p>
+        <h2 className="text-3xl font-bold text-white sm:text-4xl mb-4">How to use Backport</h2>
+        <p className="text-zinc-400 max-w-2xl mx-auto">Watch this quick walkthrough to see how to connect your backend, provision API keys, and enable enterprise security in seconds.</p>
       </motion.div>
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -551,8 +551,8 @@ const VideoDemo = () => (
         className="relative mx-auto max-w-4xl overflow-hidden rounded-2xl border border-white/10 shadow-2xl bg-black"
       >
         <img 
-          src="/demo-video.webp" 
-          alt="Backport Gameplay/Demo" 
+          src="/tutorial-video.webp" 
+          alt="Backport Tutorial Walkthrough" 
           className="w-full h-auto aspect-video object-cover"
         />
       </motion.div>

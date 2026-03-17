@@ -75,12 +75,8 @@ async def startup():
 # Standard FastAPI CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://backport-io.vercel.app",
-        "http://localhost:3000",
-        "https://backport-io-git-main-qureshi-1s-projects.vercel.app" # Preview links
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False, # We use Bearer tokens, not cookies
     allow_methods=["*"],
     allow_headers=["*"],
 )

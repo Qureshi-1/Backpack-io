@@ -26,6 +26,7 @@ import {
   AlertTriangle,
   Sparkles,
   Menu,
+  Gift,
 } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import Header from "@/components/Header";
@@ -1131,30 +1132,47 @@ const Pricing = () => {
         </div>
 
         {/* Refer & Earn Banner */}
-        <div className="mt-12 mx-auto max-w-4xl rounded-3xl border border-emerald-500/20 bg-emerald-500/5 p-6 backdrop-blur-sm sm:flex sm:items-center sm:justify-between sm:px-8">
-          <div>
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-              <span className="text-xl">🎁</span> Refer & Earn
-            </h3>
-            <p className="mt-1 text-sm text-zinc-400 max-w-lg">
-              Are you a college student or indie developer? Invite your friends
-              and{" "}
-              <strong className="text-emerald-400">
-                get 1 Month of Cloud Pro FREE
-              </strong>{" "}
-              for every successful referral. They get a $10 credit too. Start
-              referring right from your dashboard.
-            </p>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          whileHover={{ scale: 1.01 }}
+          className="group relative mt-16 mx-auto max-w-4xl overflow-hidden rounded-[2.5rem] border border-emerald-500/20 bg-emerald-500/[0.03] p-8 backdrop-blur-md sm:flex sm:items-center sm:justify-between sm:px-10 transition-all hover:border-emerald-500/40"
+        >
+          {/* Background Glows */}
+          <div className="absolute -left-16 -top-16 h-32 w-32 bg-emerald-500/10 blur-3xl transition-opacity group-hover:opacity-100 opacity-50" />
+          <div className="absolute -right-16 -bottom-16 h-32 w-32 bg-emerald-500/10 blur-3xl transition-opacity group-hover:opacity-100 opacity-50" />
+          
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/20 group-hover:scale-110 transition-transform duration-500">
+              <Gift className="h-7 w-7 text-emerald-400" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white tracking-tight">
+                Refer & Earn
+              </h3>
+              <p className="mt-1.5 text-zinc-400 max-w-lg leading-relaxed">
+                Are you a college student or indie developer? Invite your friends
+                and{" "}
+                <span className="text-emerald-400 font-semibold underline decoration-emerald-500/30 underline-offset-4">
+                  get 1 Month of Cloud Pro FREE
+                </span>{" "}
+                for every successful referral.
+              </p>
+            </div>
           </div>
-          <div className="mt-6 sm:mt-0 flex-shrink-0">
+          
+          <div className="relative z-10 mt-8 sm:mt-0 flex-shrink-0">
             <Link
               href="/auth/signup?next=/dashboard/billing"
-              className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-2.5 text-sm font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/20"
+              className="group/btn relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-emerald-500 px-8 py-3.5 text-sm font-bold text-black transition-all hover:bg-emerald-400 hover:shadow-[0_0_25px_rgba(16,185,129,0.4)] hover:-translate-y-0.5 active:translate-y-0"
             >
-              Get my Referral Link
+              <span className="relative z-10">Get my Referral Link</span>
+              <ArrowRight className="relative z-10 h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
+              <div className="absolute inset-0 -z-10 bg-gradient-to-r from-emerald-400 to-emerald-500 opacity-0 transition-opacity group-hover/btn:opacity-100" />
             </Link>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

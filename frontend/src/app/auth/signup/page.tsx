@@ -8,7 +8,9 @@ import MatrixBackground from "@/components/MatrixBackground";
 import TypingEffect from "@/components/TypingEffect";
 import SignupCard from "@/components/SignupCard";
 
-export default function SignupPage() {
+import { Suspense } from "react";
+
+function SignupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const referralCode = searchParams.get("ref") || "";
@@ -74,5 +76,13 @@ export default function SignupPage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black" />}>
+      <SignupContent />
+    </Suspense>
   );
 }

@@ -36,12 +36,22 @@ def get_me(user: User = Depends(get_current_user), db: Session = Depends(get_db)
         "target_backend_url": user.target_backend_url,
         "created_at": user.created_at,
         "is_admin": user.is_admin,
+        "referral_code": getattr(user, 'referral_code', ''),
+        "referrals_count": getattr(user, 'referrals_count', 0),
         "analytics": {
             "total_requests": total_reqs,
             "cache_hits": cached_reqs,
             "avg_latency": round(avg_latency, 1),
             "threats_blocked": threats
         }
+    }
+
+@router.get("/referrals")
+def get_referrals(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return {
+        "referral_code": user.referral_code,
+        "referrals_count": user.referrals_count,
+        "referral_link": f"https://backport-io.vercel.app/auth/signup?ref={user.referral_code}"
     }
 
 @router.get("/settings")

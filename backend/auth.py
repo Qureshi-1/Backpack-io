@@ -13,6 +13,7 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 class AuthReq(BaseModel):
     email: str
     password: str
+    referral_code: str = ""
 
 def get_password_hash(password: str) -> str:
     salt = bcrypt.gensalt()
@@ -34,10 +35,18 @@ def signup(req: AuthReq, db: Session = Depends(get_db)):
     if db.query(User).filter(User.email == req.email.lower()).first():
         raise HTTPException(status_code=400, detail="Email already registered")
         
+    referred_by = None
+    if req.referral_code:
+        referrer = db.query(User).filter(User.referral_code == req.referral_code).first()
+        if referrer:
+            referred_by = referrer.id
+            referrer.referrals_count += 1
+
     user = User(
         email=req.email.lower(),
         hashed_password=get_password_hash(req.password),
-        is_admin=(req.email.lower() == ADMIN_EMAIL)
+        is_admin=(req.email.lower() == ADMIN_EMAIL),
+        referred_by_id=referred_by
     )
     db.add(user)
     db.commit()

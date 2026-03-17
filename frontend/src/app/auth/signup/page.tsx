@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { fetchApi } from "@/lib/api";
 import { auth } from "@/lib/auth";
 import toast from "react-hot-toast";
@@ -10,6 +10,9 @@ import SignupCard from "@/components/SignupCard";
 
 export default function SignupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const referralCode = searchParams.get("ref") || "";
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -32,7 +35,11 @@ export default function SignupPage() {
     try {
       const data = await fetchApi("/api/auth/signup", {
         method: "POST",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ 
+          email, 
+          password,
+          referral_code: referralCode 
+        }),
       });
       auth.setToken(data.token);
       auth.setApiKey(data.api_key);

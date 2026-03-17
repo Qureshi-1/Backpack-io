@@ -21,9 +21,28 @@ async def startup():
         # Auto-migrate new columns
         with engine.begin() as conn:
             from sqlalchemy import text
-            for col, dev_val in [("rate_limit_enabled", "true"), ("caching_enabled", "false"), ("idempotency_enabled", "true"), ("waf_enabled", "false"), ("api_key", "null")]:
+            # Migrating basic toggles
+            for col, dev_val in [
+                ("rate_limit_enabled", "true"), 
+                ("caching_enabled", "false"), 
+                ("idempotency_enabled", "true"), 
+                ("waf_enabled", "false"), 
+                ("api_key", "null")
+            ]:
                 try:
                     conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} BOOLEAN DEFAULT {dev_val}"))
+                except Exception:
+                    pass
+            
+            # Migrating Referral columns
+            migration_cols = [
+                ("referral_code", "VARCHAR"),
+                ("referred_by_id", "INTEGER"),
+                ("referrals_count", "INTEGER DEFAULT 0")
+            ]
+            for col, col_type in migration_cols:
+                try:
+                    conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} {col_type}"))
                 except Exception:
                     pass
 

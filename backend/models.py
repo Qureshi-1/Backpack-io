@@ -21,8 +21,15 @@ class User(Base):
     idempotency_enabled = Column(Boolean, default=True)
     waf_enabled = Column(Boolean, default=False)
     
+    # Referral System
+    referral_code = Column(String, unique=True, index=True, default=lambda: secrets.token_hex(4))
+    referred_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    referrals_count = Column(Integer, default=0)
+    
     feedbacks = relationship("Feedback", back_populates="user")
     api_keys = relationship("ApiKey", back_populates="user", cascade="all, delete-orphan")
+    
+    referred_users = relationship("User", backref="referrer", remote_side=[id])
 
 class ApiKey(Base):
     __tablename__ = "api_keys"

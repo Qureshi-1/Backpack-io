@@ -10,6 +10,7 @@ import {
   LogOut,
   CreditCard,
   Users,
+  Gift,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { auth } from "@/lib/auth";
@@ -39,6 +40,7 @@ export default function Sidebar() {
     { name: "API Keys", href: "/dashboard/api-keys", icon: Key },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
     { name: "Billing", href: "/dashboard/billing", icon: CreditCard },
+    { name: "Referrals", href: "/dashboard/referrals", icon: Gift },
   ];
 
   if (isAdmin) {

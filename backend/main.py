@@ -92,7 +92,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 # 3. Health Endpoint (Public)
 @app.get("/health")
 def health():
-    return {"status": "ok", "version": "1.1.2", "cors": "explicit_origins"}
+    return {"status": "ok", "version": "1.1.3", "cors": "universal"}
 
 # 4. Include Routers
 app.include_router(auth.router)

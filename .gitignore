@@ -2,7 +2,9 @@ frontend/.next/
 frontend/node_modules/
 frontend/npm-debug.log
 frontend/.env.local
+frontend/.env
 backend/__pycache__/
 backend/venv/
+backend/.env
 *.pyc
 .DS_Store

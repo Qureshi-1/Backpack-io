@@ -92,7 +92,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 # 3. Health Endpoint (Public)
 @app.get("/health")
 def health():
-    return {"status": "ok", "version": "1.1.3", "cors": "universal"}
+    return {"status": "ok", "version": "1.1.4", "cors": "pure_brute_force"}
 
 # 4. Include Routers
 app.include_router(auth.router)
@@ -103,6 +103,31 @@ app.include_router(admin.router)
 
 # Proxy route MUST be included so it operates at /proxy/
 app.include_router(proxy.router)
+
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class PureCORSMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        if request.method == "OPTIONS":
+            response = JSONResponse(content="OK")
+        else:
+            try:
+                response = await call_next(request)
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                response = JSONResponse(
+                    status_code=500, 
+                    content={"error": "Internal server error", "detail": str(e)}
+                )
+        
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Credentials"] = "false"
+        response.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,PATCH,OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Authorization,Content-Type,X-API-Key"
+        return response
+
+app.add_middleware(PureCORSMiddleware)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080)

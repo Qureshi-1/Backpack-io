@@ -18,49 +18,43 @@ async def startup():
         Base.metadata.create_all(bind=engine)
         print("✅ Database initialized")
         
-        # Auto-migrate new columns
-        with engine.begin() as conn:
-            from sqlalchemy import text
-            # Migrating basic toggles
-            for col, dev_val in [
-                ("rate_limit_enabled", "true"), 
-                ("caching_enabled", "false"), 
-                ("idempotency_enabled", "true"), 
-                ("waf_enabled", "false"), 
-                ("api_key", "null")
-            ]:
+        # Auto-migrate new columns - Individually to avoid mass rollbacks
+        migration_all = [
+            ("rate_limit_enabled", "BOOLEAN DEFAULT true"),
+            ("caching_enabled", "BOOLEAN DEFAULT false"),
+            ("idempotency_enabled", "BOOLEAN DEFAULT true"),
+            ("waf_enabled", "BOOLEAN DEFAULT false"),
+            ("api_key", "VARCHAR"),
+            ("referral_code", "VARCHAR"),
+            ("referred_by_id", "INTEGER"),
+            ("referrals_count", "INTEGER DEFAULT 0"),
+            ("total_paid_referrals", "INTEGER DEFAULT 0"),
+            ("pending_referrals_count", "INTEGER DEFAULT 0"),
+            ("has_received_first_reward", "BOOLEAN DEFAULT false")
+        ]
+        
+        from sqlalchemy import text
+        for col, col_type in migration_all:
+            try:
+                # Use a fresh transaction for each column
+                with engine.begin() as conn:
+                    # PostgreSQL IF NOT EXISTS
+                    conn.execute(text(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col} {col_type}"))
+                print(f"✅ Migration: Column {col} ensures exists.")
+            except Exception:
+                # Fallback for SQLite (no IF NOT EXISTS)
                 try:
-                    conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} BOOLEAN DEFAULT {dev_val}"))
+                    with engine.begin() as conn:
+                        conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} {col_type}"))
                 except Exception:
                     pass
-            
-            # Migrating Referral columns
-            migration_cols = [
-                ("referral_code", "VARCHAR"),
-                ("referred_by_id", "INTEGER"),
-                ("referrals_count", "INTEGER DEFAULT 0"),
-                ("total_paid_referrals", "INTEGER DEFAULT 0"),
-                ("pending_referrals_count", "INTEGER DEFAULT 0"),
-                ("has_received_first_reward", "BOOLEAN DEFAULT false")
-            ]
-            for col, col_type in migration_cols:
-                try:
-                    # 'IF NOT EXISTS' is supported in PostgreSQL 9.6+
-                    conn.execute(text(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col} {col_type}"))
-                    print(f"✅ Migration: Column {col} ensures exists.")
-                except Exception as e:
-                    # Fallback for SQLite which doesn't support IF NOT EXISTS in ALTER TABLE
-                    try:
-                        conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} {col_type}"))
-                    except Exception:
-                        pass
 
         # Migrate API Keys to new table
         with SessionLocal() as db:
             from models import User, ApiKey
             users = db.query(User).all()
             for u in users:
-                if u.api_key:
+                if getattr(u, "api_key", None):
                     # Check if they already have keys in the new table
                     existing_key = db.query(ApiKey).filter(ApiKey.user_id == u.id).first()
                     if not existing_key:
@@ -98,7 +92,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 # 3. Health Endpoint (Public)
 @app.get("/health")
 def health():
-    return {"status": "ok", "version": "1.1.5", "cors": "pure_brute_force"}
+    return {"status": "ok", "version": "1.1.6", "cors": "pure_brute_force"}
 
 # 4. Include Routers
 app.include_router(auth.router)

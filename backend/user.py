@@ -51,6 +51,10 @@ def get_referrals(user: User = Depends(get_current_user), db: Session = Depends(
     return {
         "referral_code": user.referral_code,
         "referrals_count": user.referrals_count,
+        "total_paid_referrals": getattr(user, 'total_paid_referrals', 0),
+        "pending_referrals_count": getattr(user, 'pending_referrals_count', 0),
+        "has_received_first_reward": getattr(user, 'has_received_first_reward', False),
+        "is_referred": user.referred_by_id is not None,
         "referral_link": f"https://backport-io.vercel.app/auth/signup?ref={user.referral_code}"
     }
 

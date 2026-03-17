@@ -24,7 +24,10 @@ class User(Base):
     # Referral System
     referral_code = Column(String, unique=True, index=True, default=lambda: secrets.token_hex(4))
     referred_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    referrals_count = Column(Integer, default=0)
+    referrals_count = Column(Integer, default=0) # Total signups
+    total_paid_referrals = Column(Integer, default=0) # Actual conversions
+    pending_referrals_count = Column(Integer, default=0) # Progress toward next reward
+    has_received_first_reward = Column(Boolean, default=False)
     
     feedbacks = relationship("Feedback", back_populates="user")
     api_keys = relationship("ApiKey", back_populates="user", cascade="all, delete-orphan")

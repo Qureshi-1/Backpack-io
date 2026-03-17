@@ -38,7 +38,10 @@ async def startup():
             migration_cols = [
                 ("referral_code", "VARCHAR"),
                 ("referred_by_id", "INTEGER"),
-                ("referrals_count", "INTEGER DEFAULT 0")
+                ("referrals_count", "INTEGER DEFAULT 0"),
+                ("total_paid_referrals", "INTEGER DEFAULT 0"),
+                ("pending_referrals_count", "INTEGER DEFAULT 0"),
+                ("has_received_first_reward", "BOOLEAN DEFAULT false")
             ]
             for col, col_type in migration_cols:
                 try:

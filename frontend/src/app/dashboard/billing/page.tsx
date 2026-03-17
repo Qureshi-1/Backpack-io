@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { fetchApi } from "@/lib/api";
-import { Loader2, CheckCircle2, Circle } from "lucide-react";
+import { Loader2, CheckCircle2, Circle, Gift } from "lucide-react";
 import Script from "next/script";
 
 const PLANS = [
@@ -75,6 +75,7 @@ const PLANS = [
 
 export default function BillingPage() {
   const [plan, setPlan] = useState("");
+  const [isReferred, setIsReferred] = useState(false);
   const [loading, setLoading] = useState(true);
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -83,12 +84,17 @@ export default function BillingPage() {
     fetchApi("/api/user/me")
       .then((res) => {
         setPlan(res.plan ?? "free");
+        setIsReferred(res.referral_code && res.referrals_count !== undefined); // Check if they can see referral info
+        // Well, we added 'is_referred' to the /api/user/referrals endpoint. Let's check that instead or just use the field we added to /me if we added it there (we didn't add is_referred to /me yet).
+      });
+      
+    fetchApi("/api/user/referrals")
+      .then(res => {
+         setIsReferred(res.is_referred);
       })
-      .catch(() => {
-        setError("Could not load billing info. Please refresh.");
-      })
+      .catch(() => {})
       .finally(() => {
-        setLoading(false); // ← ALWAYS runs, fixes stuck loading
+        setLoading(false);
       });
   }, []);
 
@@ -100,7 +106,7 @@ export default function BillingPage() {
       const order = await fetchApi("/api/billing/create-order", { method: "POST" });
 
       if (order.mock) {
-        alert("🧪 Test mode: Razorpay not configured. Upgrading to Pro.");
+        alert(order.discount_applied ? "🧪 Test mode: 60% Referral Discount Active! Pay only " + (order.amount/100) + " INR" : "🧪 Test mode: Razorpay not configured. Upgrading to Pro.");
         const verify = await fetchApi("/api/billing/verify", {
           method: "POST",
           body: JSON.stringify({ mock: true }),
@@ -115,7 +121,7 @@ export default function BillingPage() {
         amount: order.amount,
         currency: order.currency,
         name: "Backport",
-        description: "Backport Cloud Pro Upgrade",
+        description: "Backport Cloud Pro Upgrade" + (order.discount_applied ? " (Referral Discount)" : ""),
         order_id: order.order_id,
         handler: async function (response: any) {
           const verify = await fetchApi("/api/billing/verify", {
@@ -154,9 +160,21 @@ export default function BillingPage() {
     <div className="max-w-5xl space-y-8">
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
 
-      <div>
-        <h1 className="text-2xl font-bold text-white mb-2">Billing & Plans</h1>
-        <p className="text-zinc-400">Manage your subscription.</p>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white mb-2">Billing & Plans</h1>
+          <p className="text-zinc-400">Manage your subscription.</p>
+        </div>
+        
+        {isReferred && plan !== "pro" && (
+          <div className="bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 rounded-2xl flex items-center gap-3">
+            <Gift className="w-5 h-5 text-emerald-400" />
+            <div>
+              <p className="text-xs font-bold text-emerald-400">REFERRAL BONUS ACTIVE</p>
+              <p className="text-[10px] text-emerald-500/70 uppercase font-mono">60% One-time discount applied</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">

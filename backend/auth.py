@@ -40,7 +40,7 @@ def signup(req: AuthReq, db: Session = Depends(get_db)):
         referrer = db.query(User).filter(User.referral_code == req.referral_code).first()
         if referrer:
             referred_by = referrer.id
-            referrer.referrals_count += 1
+            referrer.referrals_count += 1 # Total signup count for tracking
 
     user = User(
         email=req.email.lower(),

@@ -32,8 +32,16 @@ def create_order(user: User = Depends(get_current_user)):
     if user.plan == "pro":
         raise HTTPException(status_code=400, detail="Already on Pro plan")
 
-    amount = 3900  # $39 USD = 3900 INR (approx) in paise = 390000
-    amount_paise = amount * 100  # Razorpay uses paise
+    base_amount = 3900 # INR 3900
+    
+    # If user was referred, give 60% discount (Pay only 40%)
+    final_amount = base_amount
+    is_discounted = False
+    if getattr(user, 'referred_by_id', None):
+        final_amount = int(base_amount * 0.4) # 60% OFF
+        is_discounted = True
+
+    amount_paise = final_amount * 100 
 
     if rzp_client:
         try:
@@ -41,14 +49,18 @@ def create_order(user: User = Depends(get_current_user)):
                 "amount": amount_paise,
                 "currency": "INR",
                 "receipt": f"rcpt_{user.id}",
-                "notes": {"user_id": str(user.id)}
+                "notes": {
+                    "user_id": str(user.id),
+                    "discounted": str(is_discounted)
+                }
             }
             order = rzp_client.order.create(data=order_data)
             return {
                 "order_id": order["id"],
                 "amount": order["amount"],
                 "currency": order["currency"],
-                "key_id": RAZORPAY_KEY_ID
+                "key_id": RAZORPAY_KEY_ID,
+                "discount_applied": is_discounted
             }
         except Exception:
             pass  # Fallback to mock
@@ -58,27 +70,54 @@ def create_order(user: User = Depends(get_current_user)):
         "amount": amount_paise,
         "currency": "INR",
         "key_id": RAZORPAY_KEY_ID or "mock_key",
-        "mock": True
+        "mock": True,
+        "discount_applied": is_discounted
     }
 
 @router.post("/verify")
 def verify_payment(req: VerifyReq, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    success = False
     if req.mock:
+        success = True
+    elif rzp_client:
+        try:
+            rzp_client.utility.verify_payment_signature({
+                "razorpay_order_id": req.razorpay_order_id,
+                "razorpay_payment_id": req.razorpay_payment_id,
+                "razorpay_signature": req.razorpay_signature
+            })
+            success = True
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid payment signature")
+    else:
+        raise HTTPException(status_code=500, detail="Razorpay not configured")
+
+    if success:
         user.plan = "pro"
+        
+        # Handle Referrer Reward
+        if getattr(user, 'referred_by_id', None):
+            referrer = db.query(User).filter(User.id == user.referred_by_id).first()
+            if referrer:
+                referrer.total_paid_referrals += 1
+                
+                award_pro = False
+                # Rule: 1st referral = 1 month free. Then every 5 referrals = 1 month free.
+                if not referrer.has_received_first_reward:
+                    award_pro = True
+                    referrer.has_received_first_reward = True
+                else:
+                    referrer.pending_referrals_count += 1
+                    if referrer.pending_referrals_count >= 5:
+                        award_pro = True
+                        referrer.pending_referrals_count = 0
+                
+                if award_pro:
+                    # Upgrade referrer to Pro (or extend if already pro)
+                    referrer.plan = "pro"
+                    # In a real app, we'd add 30 days to an expiry date column
+        
         db.commit()
         return {"status": "success", "plan": "pro"}
-        
-    if not rzp_client:
-        raise HTTPException(status_code=500, detail="Razorpay is not configured")
-        
-    try:
-        rzp_client.utility.verify_payment_signature({
-            "razorpay_order_id": req.razorpay_order_id,
-            "razorpay_payment_id": req.razorpay_payment_id,
-            "razorpay_signature": req.razorpay_signature
-        })
-        user.plan = "pro"
-        db.commit()
-        return {"status": "success", "plan": "pro"}
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid payment signature")
+    
+    return {"status": "error", "message": "Verification failed"}

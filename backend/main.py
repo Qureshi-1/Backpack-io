@@ -45,9 +45,15 @@ async def startup():
             ]
             for col, col_type in migration_cols:
                 try:
-                    conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} {col_type}"))
-                except Exception:
-                    pass
+                    # 'IF NOT EXISTS' is supported in PostgreSQL 9.6+
+                    conn.execute(text(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col} {col_type}"))
+                    print(f"✅ Migration: Column {col} ensures exists.")
+                except Exception as e:
+                    # Fallback for SQLite which doesn't support IF NOT EXISTS in ALTER TABLE
+                    try:
+                        conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} {col_type}"))
+                    except Exception:
+                        pass
 
         # Migrate API Keys to new table
         with SessionLocal() as db:
@@ -92,7 +98,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 # 3. Health Endpoint (Public)
 @app.get("/health")
 def health():
-    return {"status": "ok", "version": "1.1.4", "cors": "pure_brute_force"}
+    return {"status": "ok", "version": "1.1.5", "cors": "pure_brute_force"}
 
 # 4. Include Routers
 app.include_router(auth.router)

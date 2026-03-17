@@ -528,6 +528,38 @@ const TechStack = () => (
   </div>
 );
 
+// ─── Video Demo ───────────────────────────────────────────────────────────────
+const VideoDemo = () => (
+  <section className="bg-zinc-950 py-24 border-b border-white/5 overflow-hidden">
+    <div className="mx-auto max-w-5xl px-6 text-center">
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="mb-12"
+      >
+        <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400 mb-4">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" /> 2-Minute Tour
+        </span>
+        <h2 className="text-3xl font-bold text-white sm:text-4xl mb-4">See Backport in Action</h2>
+        <p className="text-zinc-400 max-w-2xl mx-auto">See how easy it is to setup rate limiting and WAF without writing a single line of backend code.</p>
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true }}
+        className="relative mx-auto max-w-4xl overflow-hidden rounded-2xl border border-white/10 shadow-2xl bg-black"
+      >
+        <img 
+          src="/demo-video.webp" 
+          alt="Backport Gameplay/Demo" 
+          className="w-full h-auto aspect-video object-cover"
+        />
+      </motion.div>
+    </div>
+  </section>
+);
+
 // ─── Problem → Solution ────────────────────────────────────────────────────────
 const ProblemSolution = () => (
   <section className="bg-black py-28">
@@ -1499,6 +1531,7 @@ export default function LandingPage() {
       <main>
         <Hero onDemo={() => setShowDemo(true)} />
         <TechStack />
+        <VideoDemo />
         <ProblemSolution />
         <Features />
         <CompetitorCompare />

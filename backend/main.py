@@ -75,7 +75,11 @@ async def startup():
 # Standard FastAPI CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Allow all for now to fix user block immediately
+    allow_origins=[
+        "https://backport-io.vercel.app",
+        "http://localhost:3000",
+        "https://backport-io-git-main-qureshi-1s-projects.vercel.app" # Preview links
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -92,7 +96,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 # 3. Health Endpoint (Public)
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "version": "1.1.2", "cors": "explicit_origins"}
 
 # 4. Include Routers
 app.include_router(auth.router)

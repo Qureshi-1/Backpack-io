@@ -1,39 +1,70 @@
 "use client";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Calendar, User, Clock } from "lucide-react";
+import MatrixBackground from "@/components/MatrixBackground";
 
-export default function ComingSoonPage() {
+const POSTS = [
+  {
+    title: "Why Traditional Backends fail under burst traffic",
+    description: "Learn how API gateways like Backport prevent database thrashing using sliding-window rate limits and intelligent caching.",
+    date: "March 15, 2026",
+    author: "Sohail Qureshi",
+    readTime: "5 min read",
+    slug: "why-backends-fail",
+    tag: "Security"
+  },
+  {
+    title: "Introducing WAF 2.0: Stopping SQLi in 30 seconds",
+    description: "A deep dive into our new Web Application Firewall engine and how it intercepts malicious payloads without slowing down requests.",
+    date: "March 10, 2026",
+    author: "Backport Team",
+    readTime: "4 min read",
+    slug: "waf-2-announcement",
+    tag: "Update"
+  }
+];
+
+export default function BlogPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-950 px-6 text-center">
-      <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/10">
-        <span className="text-2xl text-emerald-400">🚧</span>
+    <div className="relative min-h-screen bg-black text-zinc-300">
+      <MatrixBackground />
+      
+      <div className="mx-auto max-w-5xl px-6 py-24 relative z-10">
+        <div className="mb-16 text-center">
+          <h1 className="text-4xl font-bold text-white sm:text-6xl tracking-tight mb-4">Engineering Blog</h1>
+          <p className="text-zinc-500 text-lg">Insights on API security, performance, and scaling.</p>
+        </div>
+
+        <div className="grid gap-8">
+          {POSTS.map((post) => (
+            <Link 
+              key={post.slug} 
+              href={`/blog/${post.slug}`}
+              className="group block p-8 rounded-2xl border border-white/5 bg-zinc-900/50 hover:bg-zinc-900 hover:border-emerald-500/30 transition-all"
+            >
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex-1">
+                  <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium mb-4">
+                    {post.tag}
+                  </span>
+                  <h2 className="text-2xl font-bold text-white group-hover:text-emerald-400 transition-colors mb-2">
+                    {post.title}
+                  </h2>
+                  <p className="text-zinc-400 mb-6 leading-relaxed">
+                    {post.description}
+                  </p>
+                  <div className="flex items-center gap-6 text-xs text-zinc-500 font-mono">
+                    <span className="flex items-center gap-2"><Calendar className="w-3 h-3"/> {post.date}</span>
+                    <span className="flex items-center gap-2"><User className="w-3 h-3"/> {post.author}</span>
+                    <span className="flex items-center gap-2"><Clock className="w-3 h-3"/> {post.readTime}</span>
+                  </div>
+                </div>
+                <ArrowRight className="w-6 h-6 text-zinc-700 group-hover:text-emerald-400 group-hover:translate-x-2 transition-all" />
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
-      <h1 className="mb-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-        Coming Soon
-      </h1>
-      <p className="mb-8 max-w-md text-zinc-400">
-        We are working on it. Get notified when this page goes live.
-      </p>
-      <form className="mb-8 flex w-full max-w-sm items-center gap-2" onSubmit={(e) => e.preventDefault()}>
-        <input
-          type="email"
-          placeholder="Enter your email"
-          className="h-10 text-sm flex-1 rounded-lg border border-zinc-800 bg-zinc-900 px-4 text-white focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-        />
-        <button
-          className="h-10 rounded-lg bg-emerald-500 px-4 text-sm font-semibold text-black transition-colors hover:bg-emerald-400"
-          type="button"
-        >
-          Notify Me
-        </button>
-      </form>
-      <Link
-        href="/"
-        className="group flex items-center gap-2 text-sm font-medium text-emerald-400 transition-colors hover:text-emerald-300"
-      >
-        <ArrowRight className="h-4 w-4 rotate-180 transition-transform group-hover:-translate-x-1" />
-        Back to Home
-      </Link>
     </div>
   );
 }

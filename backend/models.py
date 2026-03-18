@@ -15,6 +15,9 @@ class User(Base):
     target_backend_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     is_admin = Column(Boolean, default=False)
+    is_verified = Column(Boolean, default=False)   # Email verified
+    email_verification_token = Column(String, nullable=True)  # One-time token
+    email_verification_sent_at = Column(DateTime, nullable=True)  # Rate limit resends
     
     rate_limit_enabled = Column(Boolean, default=True)
     caching_enabled = Column(Boolean, default=False)

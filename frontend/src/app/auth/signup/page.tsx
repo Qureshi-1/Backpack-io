@@ -43,10 +43,9 @@ function SignupContent() {
           referral_code: referralCode 
         }),
       });
-      auth.setToken(data.token);
-      auth.setApiKey(data.api_key);
-      toast.success("Account created successfully!");
-      router.push("/dashboard");
+      // Redirect to check-email page — user must verify before accessing dashboard
+      toast.success("Account created! Check your email to verify.");
+      router.push(`/auth/check-email?email=${encodeURIComponent(email)}`);
     } catch (err: any) {
       const msg = err.message || "Signup failed";
       setError(msg);

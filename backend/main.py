@@ -30,7 +30,11 @@ async def startup():
             ("referrals_count", "INTEGER DEFAULT 0"),
             ("total_paid_referrals", "INTEGER DEFAULT 0"),
             ("pending_referrals_count", "INTEGER DEFAULT 0"),
-            ("has_received_first_reward", "BOOLEAN DEFAULT false")
+            ("has_received_first_reward", "BOOLEAN DEFAULT false"),
+            # Email verification (new)
+            ("is_verified", "BOOLEAN DEFAULT false"),
+            ("email_verification_token", "VARCHAR"),
+            ("email_verification_sent_at", "TIMESTAMP"),
         ]
         
         from sqlalchemy import text

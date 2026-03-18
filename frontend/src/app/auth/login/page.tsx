@@ -46,6 +46,13 @@ export default function LoginPage() {
     } catch (err: any) {
       let msg = err.message || "Login failed";
       
+      // Email not verified — send to check-email page with resend option
+      if (msg === "EMAIL_NOT_VERIFIED" || msg.includes("EMAIL_NOT_VERIFIED")) {
+        toast.error("Please verify your email first.");
+        router.push(`/auth/check-email?email=${encodeURIComponent(email)}`);
+        return;
+      }
+
       const lowerMsg = msg.toLowerCase();
       if (lowerMsg.includes("credentials") || lowerMsg.includes("unauthorized") || lowerMsg.includes("password") || lowerMsg.includes("incorrect")) {
         msg = "Invalid email or password. Please try again.";

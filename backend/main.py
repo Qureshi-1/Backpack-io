@@ -82,13 +82,23 @@ async def startup():
                         db.commit()
                         print(f"🔑 Migrated API Key for {u.email}")
             
-            # Auto-set Admin — always run on startup
+        # TEMP: Cleanup sq77554@gmail.com for fresh signup test
+        try:
+            with engine.begin() as conn:
+                conn.execute(text("DELETE FROM users WHERE email = 'sq77554@gmail.com'"))
+            print("🧹 TEMP: Cleaned up sq77554@gmail.com for fresh test")
+        except Exception:
+            pass
+
+        # Auto-set Admin — always run on startup
+        with SessionLocal() as db:
             admin_user = db.query(User).filter(User.email == ADMIN_EMAIL).first()
             if admin_user:
                 admin_user.is_admin = True
                 admin_user.is_verified = True  # Always keep admin verified
                 db.commit()
                 print(f"👑 Admin privileges + verified for {ADMIN_EMAIL}")
+
     except Exception as e:
         print(f"⚠️  DB init warning: {e}")
 

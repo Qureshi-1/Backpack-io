@@ -21,6 +21,6 @@ PORT = int(os.getenv("PORT", 8080))
 
 # ─── Email via Resend ──────────────────────────────────────────────────────────
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-FROM_EMAIL = os.getenv("FROM_EMAIL", "Backport <noreply@backportio.com>")
+FROM_EMAIL = os.getenv("FROM_EMAIL", "onboarding@resend.dev")
 APP_NAME = "Backport"
 EMAIL_VERIFY_EXPIRE_HOURS = 24  # Verification token expires after 24 hours

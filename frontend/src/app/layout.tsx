@@ -10,15 +10,31 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   metadataBase: new URL('https://backport-io.vercel.app'),
   title: 'Backport | Open Source API Gateway – Rate Limiting + WAF + Cache',
-  description: 'Add rate limiting, intelligent caching, idempotency and WAF to any backend in 30 seconds. No code changes required. Free to start.',
+  description: 'Add rate limiting, intelligent caching, idempotency and WAF to any backend in 30 seconds. No code changes required. Free to start. Open source & self-hostable.',
+  keywords: ['API Gateway', 'Rate Limiting', 'WAF', 'Web Application Firewall', 'Caching', 'FastAPI', 'Laravel', 'Node.js', 'Express', 'API Security', 'Open Source'],
+  authors: [{ name: 'Backport' }],
   openGraph: {
     title: 'Backport – Shield your backend in 30 seconds',
-    description: 'Add rate limiting, caching, idempotency and WAF to any backend. No SDK, no code changes.',
+    description: 'Add rate limiting, caching, idempotency and WAF to any backend. No SDK, no code changes. Free to start.',
     url: 'https://backport-io.vercel.app',
+    siteName: 'Backport',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Backport – Open Source API Gateway',
+      },
+    ],
+    type: 'website',
+    locale: 'en_US',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Backport – Open Source API Gateway',
+    description: 'Add rate limiting, caching, idempotency and WAF to any backend in 30 seconds. No code changes required.',
+    images: ['/og-image.png'],
+    creator: '@backportio',
   },
   alternates: {
     canonical: '/',
@@ -27,6 +43,14 @@ export const metadata: Metadata = {
     icon: '/favicon.ico',
     shortcut: '/favicon.ico',
     apple: '/apple-touch-icon.png',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
   },
 };
 

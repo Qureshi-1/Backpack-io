@@ -44,6 +44,33 @@ const ScrollProgress = () => {
   );
 };
 
+// ─── GitHub Stars Live Count ──────────────────────────────────────────────────
+const useGitHubStars = () => {
+  const [stars, setStars] = useState<number | null>(null);
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem('gh_stars');
+      const cachedTime = localStorage.getItem('gh_stars_time');
+      if (cached && cachedTime && Date.now() - Number(cachedTime) < 3600000) {
+        setStars(Number(cached)); return;
+      }
+    } catch {}
+    fetch('https://api.github.com/repos/Qureshi-1/Backport-io')
+      .then(r => r.json())
+      .then(d => {
+        if (d.stargazers_count !== undefined) {
+          setStars(d.stargazers_count);
+          try {
+            localStorage.setItem('gh_stars', String(d.stargazers_count));
+            localStorage.setItem('gh_stars_time', String(Date.now()));
+          } catch {}
+        }
+      })
+      .catch(() => {});
+  }, []);
+  return stars;
+};
+
 // ─── Typewriter cycling text ──────────────────────────────────────────────────
 const BACKENDS = [
   "Express.js API",
@@ -473,8 +500,9 @@ const Hero = ({ onDemo }: { onDemo: () => void }) => (
               <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current">
                 <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z" />
               </svg>
-              Star
+              Star on GitHub
             </a>
+            <HeroStarButton />
             <span className="flex items-center rounded-md bg-emerald-500/10 px-3 py-1.5 font-medium text-emerald-400">
               ⭐ MIT Licensed • Open Source
             </span>
@@ -498,6 +526,24 @@ const Hero = ({ onDemo }: { onDemo: () => void }) => (
     </div>
   </section>
 );
+
+// HeroStarButton: separate function component so useGitHubStars hook is valid
+function HeroStarButton() {
+  const stars = useGitHubStars();
+  return (
+    <a
+      href="https://github.com/Qureshi-1/Backport-io"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-1.5 rounded-md border border-zinc-800 bg-zinc-900 px-2 py-1 text-zinc-300 transition-colors hover:border-zinc-700 hover:bg-zinc-800"
+    >
+      <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current">
+        <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z" />
+      </svg>
+      Star on GitHub{stars !== null ? ` (${stars})` : ''}
+    </a>
+  );
+}
 
 // ─── Tech Stack ───────────────────────────────────────────────────────────────
 const TechStack = () => (
@@ -1065,7 +1111,7 @@ const Pricing = () => {
             </p>
             <ul className="mb-8 space-y-3">
               {[
-                "1,000,000 Requests / mo",
+                "1,000,000 Requests / month",
                 "AI-enhanced WAF rules",
                 "Up to 10 API Gateways",
                 "Distributed Redis",
@@ -1087,7 +1133,7 @@ const Pricing = () => {
               href="/auth/signup?plan=cloud_pro"
               className="mt-auto block w-full rounded-xl bg-emerald-500 py-2.5 text-center text-sm font-semibold text-black transition-all shadow-[0_0_15px_rgba(0,255,135,0.3)] hover:shadow-[0_0_30px_rgba(0,255,135,0.6)] hover:-translate-y-[2px] hover:bg-emerald-400"
             >
-              Get Started Free
+              Get Cloud Pro
             </Link>
           </div>
 
@@ -1419,23 +1465,23 @@ const Testimonials = () => {
   const reviews = [
     {
       quote: "Cut our API abuse by 94% in the first week. WAF setup was smoother than I expected — no config files, no YAML hell.",
-      author: "Rahul M.",
-      initials: "RM",
-      role: "Backend Engineer at a Series A Startup",
+      author: "Beta Tester #1",
+      initials: "BT",
+      role: "Backend Engineer — API Security Project",
       stars: 5,
     },
     {
       quote: "Finally, rate limiting without writing middleware. The idempotency key feature alone saved us from a 3AM duplicate payment incident.",
-      author: "Priya S.",
-      initials: "PS",
+      author: "Beta Tester #2",
+      initials: "BT",
       role: "Indie Developer — Shipped 4 SaaS products",
       stars: 5,
     },
     {
       quote: "We tested it on our Express.js app. Pointed the URL, got an API key, and it just worked. No DevOps. No complexity.",
-      author: "Arjun K.",
-      initials: "AK",
-      role: "Full Stack Developer",
+      author: "Beta Tester #3",
+      initials: "BT",
+      role: "Full Stack Developer — E-commerce Platform",
       stars: 5,
     },
   ];
@@ -1445,7 +1491,7 @@ const Testimonials = () => {
       <div className="mx-auto max-w-7xl px-6">
         <div className="mb-14 text-center">
           <h2 className="text-3xl font-bold text-white sm:text-4xl">Loved by developers</h2>
-          <p className="mt-3 text-zinc-400">Trusted by beta testers — names used with permission</p>
+          <p className="mt-3 text-zinc-400">Feedback from our early beta testers</p>
         </div>
         <div className="grid gap-6 md:grid-cols-3">
           {reviews.map((r, i) => (
@@ -1501,7 +1547,15 @@ const FAQ = () => {
     },
     {
       q: "Does it work with my existing backend?",
-      a: "Yes. Works with Express, FastAPI, Django, Laravel, Rails — any HTTP backend. Zero code changes.",
+      a: "Yes. Works with Express, FastAPI, Django, Laravel, Rails, Go Gin — any HTTP backend. Zero code changes.",
+    },
+    {
+      q: "How does billing and overage work?",
+      a: "If you hit your plan's request limit, new requests will return HTTP 429 (Too Many Requests) until the next billing cycle. You can upgrade your plan anytime from the dashboard to avoid disruption.",
+    },
+    {
+      q: "Can I switch between plans easily?",
+      a: "Yes. Upgrades take effect immediately. Downgrades take effect at the start of your next billing cycle. Manage everything from the Billing section of your dashboard.",
     },
   ];
 

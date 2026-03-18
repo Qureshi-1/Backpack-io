@@ -112,6 +112,15 @@ async def startup():
     except Exception as e:
         print(f"⚠️  DB init warning: {e}")
 
+    # Log Env Check (Debug)
+    from config import RESEND_API_KEY, FROM_EMAIL
+    if RESEND_API_KEY:
+        print(f"✅ RESEND_API_KEY found: {RESEND_API_KEY[:6]}... (length: {len(RESEND_API_KEY)})")
+    else:
+        print("❌ CRITICAL: RESEND_API_KEY is EMPTY in environment!")
+    
+    print(f"📧 FROM_EMAIL is set to: {FROM_EMAIL}")
+
 # Standard FastAPI CORS
 app.add_middleware(
     CORSMiddleware,

@@ -53,13 +53,28 @@ async def startup():
                 except Exception:
                     pass
 
+        # Make legacy api_key column nullable (was NOT NULL in old schema)
+        try:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE users ALTER COLUMN api_key DROP NOT NULL"))
+            print("✅ Migration: api_key column made nullable")
+        except Exception:
+            pass  # Already nullable or SQLite
+
+        # Mark ALL existing users as verified (so existing accounts aren't locked out)
+        try:
+            with engine.begin() as conn:
+                conn.execute(text("UPDATE users SET is_verified = true WHERE is_verified IS NULL OR is_verified = false"))
+            print("✅ Migration: existing users marked as verified")
+        except Exception as e:
+            print(f"ℹ️  existing users verify migration: {e}")
+
         # Migrate API Keys to new table
         with SessionLocal() as db:
             from models import User, ApiKey
             users = db.query(User).all()
             for u in users:
                 if getattr(u, "api_key", None):
-                    # Check if they already have keys in the new table
                     existing_key = db.query(ApiKey).filter(ApiKey.user_id == u.id).first()
                     if not existing_key:
                         new_key = ApiKey(user_id=u.id, key=u.api_key, name="Default Gateway")
@@ -71,8 +86,9 @@ async def startup():
             admin_user = db.query(User).filter(User.email == ADMIN_EMAIL).first()
             if admin_user:
                 admin_user.is_admin = True
+                admin_user.is_verified = True  # Always keep admin verified
                 db.commit()
-                print(f"👑 Admin privileges ensured for {ADMIN_EMAIL}")
+                print(f"👑 Admin privileges + verified for {ADMIN_EMAIL}")
     except Exception as e:
         print(f"⚠️  DB init warning: {e}")
 

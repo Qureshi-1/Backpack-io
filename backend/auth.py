@@ -57,6 +57,7 @@ def signup(req: AuthReq, db: Session = Depends(get_db)):
         is_verified=False,
         email_verification_token=verification_token,
         email_verification_sent_at=datetime.utcnow(),
+        api_key=secrets.token_urlsafe(16),  # legacy NOT NULL column — real keys in ApiKey model
     )
     # Admin account is auto-verified
     if user.is_admin:

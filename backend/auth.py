@@ -9,6 +9,9 @@ from jose import jwt
 from models import User, ApiKey
 from dependencies import get_db
 from config import SECRET_KEY, ALGORITHM, TOKEN_EXPIRE_MINUTES, ADMIN_EMAIL, EMAIL_VERIFY_EXPIRE_HOURS
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -77,9 +80,12 @@ def signup(req: AuthReq, db: Session = Depends(get_db)):
     if not user.is_admin:
         try:
             from email_service import send_verification_email
-            send_verification_email(user.email, verification_token)
+            if send_verification_email(user.email, verification_token):
+                logger.info(f"📧 Verification email sent to {user.email}")
+            else:
+                logger.error(f"❌ Failed to send verification email to {user.email}")
         except Exception as e:
-            print(f"⚠️  Email send failed (non-fatal): {e}")
+            logger.error(f"⚠️  Email import/send error (non-fatal): {e}", exc_info=True)
 
     return {
         "message": "Account created. Please check your email to verify your account.",
@@ -111,9 +117,12 @@ def verify_email(token: str, db: Session = Depends(get_db)):
     # Send welcome email
     try:
         from email_service import send_welcome_email
-        send_welcome_email(user.email)
-    except Exception:
-        pass
+        if send_welcome_email(user.email):
+            logger.info(f"📧 Welcome email sent to {user.email}")
+        else:
+            logger.error(f"❌ Failed to send welcome email to {user.email}")
+    except Exception as e:
+        logger.error(f"⚠️ Welcome email error: {e}")
 
     # Return JWT so frontend can auto-login
     api_key = user.api_keys[0].key if user.api_keys else None
@@ -155,9 +164,12 @@ def resend_verification(req: ResendReq, db: Session = Depends(get_db)):
 
     try:
         from email_service import send_verification_email
-        send_verification_email(user.email, new_token)
+        if send_verification_email(user.email, new_token):
+            logger.info(f"📧 Verification email (resend) sent to {user.email}")
+        else:
+            logger.error(f"❌ Failed to send verification email (resend) to {user.email}")
     except Exception as e:
-        print(f"⚠️  Resend email failed: {e}")
+        logger.error(f"⚠️ Resend link exception: {e}")
 
     return {"message": "If that email exists, a verification link has been sent."}
 

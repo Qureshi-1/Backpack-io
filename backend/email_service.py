@@ -29,11 +29,14 @@ def send_email(to: str, subject: str, html: str) -> bool:
             },
             timeout=10,
         )
-        resp.raise_for_status()
-        logger.info(f"✅ Email sent to {to}")
+        if resp.status_code >= 400:
+            logger.error(f"❌ Resend API Error ({resp.status_code}): {resp.text}")
+            return False
+        
+        logger.info(f"✅ Email sent to {to} | Response: {resp.text}")
         return True
     except Exception as e:
-        logger.error(f"❌ Email send failed: {e}")
+        logger.error(f"❌ Email exception: {e}")
         return False
 
 

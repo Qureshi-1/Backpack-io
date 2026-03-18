@@ -82,13 +82,23 @@ async def startup():
                         db.commit()
                         print(f"🔑 Migrated API Key for {u.email}")
             
-        # TEMP: Cleanup sq77554@gmail.com for fresh signup test
+        # TEMP: Aggressive cleanup for sq77554@gmail.com
         try:
             with engine.begin() as conn:
-                conn.execute(text("DELETE FROM users WHERE email = 'sq77554@gmail.com'"))
-            print("🧹 TEMP: Cleaned up sq77554@gmail.com for fresh test")
-        except Exception:
-            pass
+                # Get User ID first
+                res = conn.execute(text("SELECT id FROM users WHERE email = 'sq77554@gmail.com'")).fetchone()
+                if res:
+                    uid = res[0]
+                    # Cleanup dependencies (raw sql to be sure)
+                    conn.execute(text(f"DELETE FROM api_logs WHERE user_id = {uid}"))
+                    conn.execute(text(f"DELETE FROM api_keys WHERE user_id = {uid}"))
+                    conn.execute(text(f"DELETE FROM feedbacks WHERE user_id = {uid}"))
+                    conn.execute(text(f"DELETE FROM users WHERE id = {uid}"))
+                    print(f"🧹 TEMP: Cleaned up uid {uid} (sq77554@gmail.com) and dependencies")
+                else:
+                    print("ℹ️ TEMP: sq77554@gmail.com not found for cleanup")
+        except Exception as e:
+            print(f"❌ TEMP Cleanup Failed: {e}")
 
         # Auto-set Admin — always run on startup
         with SessionLocal() as db:

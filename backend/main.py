@@ -61,19 +61,12 @@ async def startup():
         except Exception:
             pass  # Already nullable or SQLite
 
-        # Mark OLD users (pre-verification feature) as verified
-        # Only users created BEFORE March 19, 2026 (when this feature was added)
-        # This ensures new signups are never auto-verified by migration restarts
-        try:
-            with engine.begin() as conn:
-                conn.execute(text(
-                    "UPDATE users SET is_verified = true WHERE "
-                    "(is_verified IS NULL OR is_verified = false) "
-                    "AND created_at < '2026-03-19 00:00:00'"
-                ))
-            print("✅ Migration: pre-March-19 users marked as verified")
-        except Exception as e:
-            print(f"ℹ️  pre-verify migration: {e}")
+        # DISABLED: Legacy verified migration removed.
+        # Previously caused new signups to be auto-verified on next restart.
+        # All old users (pre-March-19) are already verified from previous runs.
+        # New users go through the email verification flow properly.
+        pass
+
 
 
         # Auto-set Admin — always run on startup

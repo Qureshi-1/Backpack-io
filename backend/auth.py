@@ -37,7 +37,7 @@ def signup(req: AuthReq, db: Session = Depends(get_db)):
     if not req.email or not req.password:
         raise HTTPException(status_code=400, detail="Email and password required")
     if db.query(User).filter(User.email == req.email.lower()).first():
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="Email already registered. Please log in or reset your password.")
 
     referred_by = None
     if req.referral_code:
@@ -188,3 +188,60 @@ def login(req: AuthReq, db: Session = Depends(get_db)):
     token = create_access_token(data={"sub": str(user.id), "email": user.email})
     api_key = user.api_keys[0].key if user.api_keys else None
     return {"token": token, "api_key": api_key, "email": user.email}
+
+# ─── Password Reset ───────────────────────────────────────────────────────────
+class ForgotPasswordReq(BaseModel):
+    email: str
+
+class ResetPasswordReq(BaseModel):
+    token: str
+    new_password: str
+
+@router.post("/forgot-password")
+def forgot_password(req: ForgotPasswordReq, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == req.email.lower()).first()
+    if not user:
+        # Don't reveal if user exists
+        return {"message": "If that email exists, a password reset link has been sent."}
+
+    # Rate limiting: 1 reset link per 15 minutes
+    if user.password_reset_sent_at:
+        seconds_since = (datetime.utcnow() - user.password_reset_sent_at).total_seconds()
+        if seconds_since < 900:  # 15 minutes
+            raise HTTPException(
+                status_code=429,
+                detail=f"Please wait {int((900 - seconds_since) // 60)} minutes before requesting another reset link."
+            )
+
+    token = secrets.token_urlsafe(32)
+    user.password_reset_token = token
+    user.password_reset_sent_at = datetime.utcnow()
+    db.commit()
+
+    try:
+        from email_service import send_password_reset_email
+        if send_password_reset_email(user.email, token):
+            print(f"📧 Password reset email sent to {user.email}")
+        else:
+            print(f"❌ Failed to send password reset email to {user.email}")
+    except Exception as e:
+        print(f"⚠️ Password reset email exception: {e}")
+
+    return {"message": "If that email exists, a password reset link has been sent."}
+
+@router.post("/reset-password")
+def reset_password(req: ResetPasswordReq, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.password_reset_token == req.token).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired password reset link.")
+
+    # Check expiration (1 hour)
+    if not user.password_reset_sent_at or (datetime.utcnow() - user.password_reset_sent_at) > timedelta(hours=1):
+        raise HTTPException(status_code=400, detail="Password reset link has expired.")
+
+    # Update password and clear token
+    user.hashed_password = get_password_hash(req.new_password)
+    user.password_reset_token = None
+    db.commit()
+
+    return {"message": "Password has been successfully reset! You can now log in."}

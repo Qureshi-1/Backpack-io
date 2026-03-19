@@ -35,6 +35,8 @@ async def startup():
             ("is_verified", "BOOLEAN DEFAULT false"),
             ("email_verification_token", "VARCHAR"),
             ("email_verification_sent_at", "TIMESTAMP"),
+            ("password_reset_token", "VARCHAR"),
+            ("password_reset_sent_at", "TIMESTAMP"),
         ]
         
         from sqlalchemy import text

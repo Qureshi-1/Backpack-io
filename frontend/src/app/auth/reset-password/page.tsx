@@ -1,17 +1,23 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Loader2, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import { fetchApi } from "@/lib/api";
 import MatrixBackground from "@/components/MatrixBackground";
 import TypingEffect from "@/components/TypingEffect";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,17 +30,23 @@ export default function ResetPasswordPage() {
       setError("Password must be at least 6 characters.");
       return;
     }
+    if (!token) {
+      setError("Reset token is missing from the URL.");
+      return;
+    }
 
     setLoading(true);
     setError("");
     
-    // Simulate API request
     try {
-      await new Promise((r) => setTimeout(r, 1500));
+      await fetchApi("/api/auth/reset-password", {
+        method: "POST",
+        body: JSON.stringify({ token, new_password: password }),
+      });
       setSuccess(true);
       toast.success("Security clearance restored!");
     } catch (err: any) {
-      setError("Failed to reset password. Link may be expired.");
+      setError(err.message || "Failed to reset password. Link may be expired.");
     } finally {
       setLoading(false);
     }
@@ -126,5 +138,17 @@ export default function ResetPasswordPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-green-500" />
+      </div>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

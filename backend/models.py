@@ -19,6 +19,9 @@ class User(Base):
     email_verification_token = Column(String, nullable=True)  # One-time token
     email_verification_sent_at = Column(DateTime, nullable=True)  # Rate limit resends
     
+    password_reset_token = Column(String, nullable=True)
+    password_reset_sent_at = Column(DateTime, nullable=True)
+    
     rate_limit_enabled = Column(Boolean, default=True)
     caching_enabled = Column(Boolean, default=False)
     idempotency_enabled = Column(Boolean, default=True)

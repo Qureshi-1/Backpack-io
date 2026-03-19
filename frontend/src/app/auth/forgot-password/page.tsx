@@ -3,6 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Loader2, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import { fetchApi } from "@/lib/api";
 import MatrixBackground from "@/components/MatrixBackground";
 import TypingEffect from "@/components/TypingEffect";
 
@@ -19,13 +20,15 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     setError("");
     
-    // Simulate API request
     try {
-      await new Promise((r) => setTimeout(r, 1500));
+      await fetchApi("/api/auth/forgot-password", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
       setSuccess(true);
       toast.success("Password reset link sent!");
     } catch (err: any) {
-      setError("Failed to send reset link. Try again.");
+      setError(err.message || "Failed to send reset link. Try again.");
     } finally {
       setLoading(false);
     }

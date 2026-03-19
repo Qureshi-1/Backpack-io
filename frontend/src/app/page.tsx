@@ -31,6 +31,7 @@ import {
 import { useEffect, useState, useRef } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { auth } from "@/lib/auth";
 
 // ─── Scroll Progress Bar ──────────────────────────────────────────────────────
 const ScrollProgress = () => {
@@ -328,10 +329,12 @@ const DEMO_LINES = [
 
 const DemoModal = ({ onClose }: { onClose: () => void }) => {
   const [visibleLines, setVisibleLines] = useState(0);
+  const [isLogged, setIsLogged] = useState(false);
   useEffect(() => {
     const timers = DEMO_LINES.map((l, i) =>
       setTimeout(() => setVisibleLines(i + 1), l.delay),
     );
+    setIsLogged(auth.isLoggedIn());
     return () => timers.forEach(clearTimeout);
   }, []);
 
@@ -392,19 +395,21 @@ const DemoModal = ({ onClose }: { onClose: () => void }) => {
             >
               ✕ Close Demo
             </button>
+            {!isLogged && (
+              <Link
+                href="/auth/login"
+                onClick={onClose}
+                className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:text-white hover:border-zinc-500 transition-colors hidden sm:block"
+              >
+                Log In
+              </Link>
+            )}
             <Link
-              href="/auth/login"
-              onClick={onClose}
-              className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:text-white hover:border-zinc-500 transition-colors hidden sm:block"
-            >
-              Log In
-            </Link>
-            <Link
-              href="/auth/signup"
+              href={isLogged ? "/dashboard" : "/auth/signup"}
               onClick={onClose}
               className="rounded-lg bg-emerald-500 px-4 py-1.5 text-xs font-semibold text-black hover:bg-emerald-400 transition-colors"
             >
-              Sign Up Free →
+              {isLogged ? "Dashboard →" : "Sign Up Free →"}
             </Link>
           </div>
         </div>
@@ -416,22 +421,26 @@ const DemoModal = ({ onClose }: { onClose: () => void }) => {
 // (Header is imported from @/components/Header)
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
-const Hero = ({ onDemo }: { onDemo: () => void }) => (
-  <section className="relative pt-28 pb-16 md:pt-36 md:pb-28 overflow-hidden">
-    <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_80%_60%_at_50%_0%,#000_70%,transparent_100%)]" />
+const Hero = ({ onDemo }: { onDemo: () => void }) => {
+  const [isLogged, setIsLogged] = useState(false);
+  useEffect(() => { setIsLogged(auth.isLoggedIn()); }, []);
 
-    <div className="mx-auto max-w-7xl px-6 relative z-10">
-      <div className="grid lg:grid-cols-2 gap-16 items-center">
-        {/* Left — Text */}
-        <div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-sm text-emerald-400 mb-8"
-          >
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            Backport 1.0 is now live
-          </motion.div>
+  return (
+    <section className="relative pt-28 pb-16 md:pt-36 md:pb-28 overflow-hidden">
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_80%_60%_at_50%_0%,#000_70%,transparent_100%)]" />
+
+      <div className="mx-auto max-w-7xl px-6 relative z-10">
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
+          {/* Left — Text */}
+          <div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-sm text-emerald-400 mb-8"
+            >
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              Backport 1.0 is now live
+            </motion.div>
 
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -466,10 +475,10 @@ const Hero = ({ onDemo }: { onDemo: () => void }) => (
             className="mt-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6"
           >
             <Link
-              href="/auth/signup"
+              href={isLogged ? "/dashboard" : "/auth/signup"}
               className="group flex h-12 items-center gap-2 rounded-full bg-white px-8 text-sm font-semibold text-black transition-all shadow-[0_0_15px_rgba(0,255,135,0.3)] hover:shadow-[0_0_30px_rgba(0,255,135,0.6)] hover:-translate-y-[2px]"
             >
-              Start Free — No credit card required
+              {isLogged ? "Go to Dashboard" : "Start Free — No credit card required"}
               <ArrowRight
                 suppressHydrationWarning
                 className="h-4 w-4 group-hover:translate-x-1 transition-transform"
@@ -528,7 +537,8 @@ const Hero = ({ onDemo }: { onDemo: () => void }) => (
       />
     </div>
   </section>
-);
+  );
+};
 
 // HeroStarButton: separate function component so useGitHubStars hook is valid
 function HeroStarButton() {
@@ -1228,49 +1238,54 @@ const Pricing = () => {
 };
 
 // ─── Final CTA ────────────────────────────────────────────────────────────────
-const FinalCTA = ({ onDemo }: { onDemo: () => void }) => (
-  <section className="relative overflow-hidden bg-black py-32">
-    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-      <div className="h-[300px] w-[700px] rounded-full bg-emerald-500/10 blur-[120px]" />
-    </div>
-    <div className="relative z-10 mx-auto max-w-3xl px-6 text-center">
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-      >
-        <h2 className="mb-6 text-4xl font-bold tracking-tight text-white sm:text-6xl">
-          Your backend is one gateway <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
-            away from production-ready.
-          </span>
-        </h2>
+const FinalCTA = ({ onDemo }: { onDemo: () => void }) => {
+  const [isLogged, setIsLogged] = useState(false);
+  useEffect(() => { setIsLogged(auth.isLoggedIn()); }, []);
+
+  return (
+    <section className="relative overflow-hidden bg-black py-32">
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div className="h-[300px] w-[700px] rounded-full bg-emerald-500/10 blur-[120px]" />
+      </div>
+      <div className="relative z-10 mx-auto max-w-3xl px-6 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+        >
+          <h2 className="mb-6 text-4xl font-bold tracking-tight text-white sm:text-6xl">
+            Your backend is one gateway <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
+              away from production-ready.
+            </span>
+          </h2>
         <p className="mb-10 text-lg text-zinc-400">
           Join developers shipping with confidence. Free to start. No credit
           card required.
         </p>
-        <div className="flex flex-col items-center justify-center gap-4 sm:flex-row mt-8">
-          <Link
-            href="/auth/signup"
-            className="group flex h-14 items-center gap-2 rounded-full bg-white px-10 text-base font-semibold text-black transition-all shadow-[0_0_15px_rgba(0,255,135,0.3)] hover:shadow-[0_0_30px_rgba(0,255,135,0.6)] hover:-translate-y-[2px]"
-          >
-            Start Free — No credit card required
-          </Link>
-          <button
-            onClick={() => {
-              document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' });
-              onDemo();
-            }}
-            className="flex h-14 items-center gap-2 rounded-full border border-zinc-700 px-8 text-base font-semibold text-white transition-colors hover:bg-zinc-900"
-          >
-            <TerminalSquare suppressHydrationWarning className="h-4 w-4" /> See
-            the Demo
-          </button>
-        </div>
-      </motion.div>
-    </div>
-  </section>
-);
+          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row mt-8">
+            <Link
+              href={isLogged ? "/dashboard" : "/auth/signup"}
+              className="group flex h-14 items-center gap-2 rounded-full bg-white px-10 text-base font-semibold text-black transition-all shadow-[0_0_15px_rgba(0,255,135,0.3)] hover:shadow-[0_0_30px_rgba(0,255,135,0.6)] hover:-translate-y-[2px]"
+            >
+              {isLogged ? "Take me to Dashboard" : "Start Free — No credit card required"}
+            </Link>
+            <button
+              onClick={() => {
+                document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' });
+                onDemo();
+              }}
+              className="flex h-14 items-center gap-2 rounded-full border border-zinc-700 px-8 text-base font-semibold text-white transition-colors hover:bg-zinc-900"
+            >
+              <TerminalSquare suppressHydrationWarning className="h-4 w-4" /> See
+              the Demo
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
 
 // (Footer is imported from @/components/Footer)
 

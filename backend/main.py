@@ -61,44 +61,20 @@ async def startup():
         except Exception:
             pass  # Already nullable or SQLite
 
-        # Mark ALL existing users as verified (so existing accounts aren't locked out)
+        # Mark OLD users (pre-verification feature) as verified
+        # ONLY those who have NO verification token — i.e. they registered before this feature
+        # DO NOT mark new signups as verified (they have a token set)
         try:
             with engine.begin() as conn:
-                conn.execute(text("UPDATE users SET is_verified = true WHERE is_verified IS NULL OR is_verified = false"))
-            print("✅ Migration: existing users marked as verified")
+                conn.execute(text(
+                    "UPDATE users SET is_verified = true WHERE "
+                    "(is_verified IS NULL OR is_verified = false) "
+                    "AND email_verification_token IS NULL"
+                ))
+            print("✅ Migration: pre-verification users marked as verified (token-less accounts only)")
         except Exception as e:
-            print(f"ℹ️  existing users verify migration: {e}")
+            print(f"ℹ️  pre-verify migration: {e}")
 
-        # Migrate API Keys to new table
-        with SessionLocal() as db:
-            from models import User, ApiKey
-            users = db.query(User).all()
-            for u in users:
-                if getattr(u, "api_key", None):
-                    existing_key = db.query(ApiKey).filter(ApiKey.user_id == u.id).first()
-                    if not existing_key:
-                        new_key = ApiKey(user_id=u.id, key=u.api_key, name="Default Gateway")
-                        db.add(new_key)
-                        db.commit()
-                        print(f"🔑 Migrated API Key for {u.email}")
-            
-        # TEMP: Aggressive cleanup for sq77554@gmail.com
-        try:
-            with engine.begin() as conn:
-                # Get User ID first
-                res = conn.execute(text("SELECT id FROM users WHERE email = 'sq77554@gmail.com'")).fetchone()
-                if res:
-                    uid = res[0]
-                    # Cleanup dependencies (raw sql to be sure)
-                    conn.execute(text(f"DELETE FROM api_logs WHERE user_id = {uid}"))
-                    conn.execute(text(f"DELETE FROM api_keys WHERE user_id = {uid}"))
-                    conn.execute(text(f"DELETE FROM feedbacks WHERE user_id = {uid}"))
-                    conn.execute(text(f"DELETE FROM users WHERE id = {uid}"))
-                    print(f"🧹 TEMP: Cleaned up uid {uid} (sq77554@gmail.com) and dependencies")
-                else:
-                    print("ℹ️ TEMP: sq77554@gmail.com not found for cleanup")
-        except Exception as e:
-            print(f"❌ TEMP Cleanup Failed: {e}")
 
         # Auto-set Admin — always run on startup
         with SessionLocal() as db:

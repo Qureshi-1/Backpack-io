@@ -71,3 +71,62 @@ def bootstrap_admin(
         "message": f"✅ {email} is now an admin. Please refresh your dashboard."
     }
 
+
+# ─── Delete User (admin tool for testing) ─────────────────────────────────────
+class DeleteUserReq(BaseModel):
+    email: str
+    secret: str
+
+@router.post("/delete-user")
+def delete_user(
+    data: DeleteUserReq,
+    db: Session = Depends(get_db)
+):
+    if data.secret != ADMIN_SECRET:
+        raise HTTPException(status_code=403, detail="Invalid secret")
+    
+    target = db.query(User).filter(User.email == data.email.lower()).first()
+    if not target:
+        return {"status": "not_found", "message": f"No user found with email: {data.email}"}
+    
+    # Delete dependencies
+    from models import ApiKey, ApiLog, Feedback
+    db.query(ApiLog).filter(ApiLog.user_id == target.id).delete()
+    db.query(ApiKey).filter(ApiKey.user_id == target.id).delete()
+    db.query(Feedback).filter(Feedback.user_id == target.id).delete()
+    db.delete(target)
+    db.commit()
+    return {"status": "deleted", "message": f"🗑️ User {data.email} and all related data deleted."}
+
+
+# ─── Force-resend verification email (debug endpoint) ─────────────────────────
+@router.get("/resend-verify")
+def admin_resend_verify(
+    email: str = Query(...),
+    secret: str = Query(...),
+    db: Session = Depends(get_db)
+):
+    import secrets as _secrets
+    from datetime import datetime
+    
+    if secret != ADMIN_SECRET:
+        raise HTTPException(status_code=403, detail="Invalid secret")
+    
+    target = db.query(User).filter(User.email == email.lower()).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if target.is_verified:
+        return {"status": "already_verified", "message": "User is already verified."}
+    
+    token = _secrets.token_urlsafe(32)
+    target.email_verification_token = token
+    target.email_verification_sent_at = datetime.utcnow()
+    db.commit()
+    
+    from email_service import send_verification_email
+    result = send_verification_email(target.email, token)
+    return {
+        "status": "sent" if result else "failed",
+        "message": f"Email {'sent' if result else 'FAILED'} to {target.email}"
+    }

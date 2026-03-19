@@ -114,13 +114,77 @@ def delete_api_key(key_id: int, user: User = Depends(get_current_user), db: Sess
     key_obj = db.query(ApiKey).filter(ApiKey.id == key_id, ApiKey.user_id == user.id).first()
     if not key_obj:
         from fastapi import HTTPException
-        raise HTTPException(status_code=404, detail="Key not found")
+        raise HTTPException(status_code=404, detail="API Key not found")
     
-    # Don't allow deleting the last key
     if len(user.api_keys) <= 1:
         from fastapi import HTTPException
-        raise HTTPException(status_code=400, detail="Cannot delete your only API key")
+        raise HTTPException(status_code=400, detail="Cannot delete your only API key. Create a new one first.")
         
     db.delete(key_obj)
     db.commit()
     return {"status": "success"}
+
+@router.get("/logs")
+def get_user_logs(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from models import ApiLog
+    logs = db.query(ApiLog).filter(ApiLog.user_id == user.id).order_by(ApiLog.created_at.desc()).limit(20).all()
+    
+    result = []
+    for log in logs:
+        if log.status_code == 403:
+            action = "WAF Block"
+            badge = "bg-rose-500/10 text-rose-500 border border-rose-500/20"
+        elif log.status_code == 429:
+            action = "Rate Limited"
+            badge = "bg-orange-500/10 text-orange-500 border border-orange-500/20"
+        elif log.was_cached:
+            action = "Cached"
+            badge = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+        elif log.status_code >= 500:
+            action = "Target Error"
+            badge = "bg-rose-500/10 text-rose-500 border border-rose-500/20"
+        else:
+            action = "Passed"
+            badge = "bg-zinc-800 text-zinc-300"
+            
+        result.append({
+            "id": log.id,
+            "method": log.method,
+            "path": log.path,
+            "status": log.status_code,
+            "time": f"{log.latency_ms}ms",
+            "action": action,
+            "badge": badge,
+            "date": log.created_at.isoformat()
+        })
+    return result
+
+@router.get("/traffic")
+def get_traffic_chart(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from models import ApiLog
+    import datetime
+    
+    # We will fetch logs from the last 15 minutes and group them by minute in Python 
+    # (to be compatible with both sqlite and postgres without complex sql)
+    fifteen_mins_ago = datetime.datetime.utcnow() - datetime.timedelta(minutes=15)
+    logs = db.query(ApiLog).filter(
+        ApiLog.user_id == user.id, 
+        ApiLog.created_at >= fifteen_mins_ago
+    ).all()
+    
+    # Initialize 15 empty buckets for the last 15 minutes
+    buckets = {}
+    now = datetime.datetime.utcnow().replace(second=0, microsecond=0)
+    for i in range(15):
+        t = now - datetime.timedelta(minutes=(14 - i))
+        key = t.strftime("%I:%M %p")
+        buckets[key] = 0
+        
+    for log in logs:
+        key = log.created_at.replace(second=0, microsecond=0).strftime("%I:%M %p")
+        if key in buckets:
+            buckets[key] += 1
+            
+    # Format for Recharts
+    traffic_data = [{"time": k, "requests": v} for k, v in buckets.items()]
+    return {"traffic_data": traffic_data}

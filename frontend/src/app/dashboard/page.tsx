@@ -6,29 +6,25 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import TrafficChart from "@/components/TrafficChart";
 
-const MOCK_LOGS = [
-  { id: 1, method: "GET", path: "/api/products", status: 200, time: "23ms", action: "Passed", badge: "bg-zinc-800 text-zinc-300", date: "Just now" },
-  { id: 2, method: "POST", path: "/api/login", status: 429, time: "2ms", action: "Rate Limited", badge: "bg-rose-500/10 text-rose-500 border border-rose-500/20", date: "1m ago" },
-  { id: 3, method: "GET", path: "/wp-login.php", status: 403, time: "1ms", action: "WAF Block", badge: "bg-rose-500/10 text-rose-500 border border-rose-500/20", date: "5m ago" },
-  { id: 4, method: "GET", path: "/api/users", status: 200, time: "0ms", action: "Cached", badge: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20", date: "12m ago" },
-  { id: 5, method: "POST", path: "/api/checkout", status: 200, time: "28ms", action: "Idempotency Hit", badge: "bg-blue-500/10 text-blue-400 border border-blue-500/20", date: "15m ago" },
-  { id: 6, method: "PUT", path: "/api/profile", status: 200, time: "45ms", action: "Passed", badge: "bg-zinc-800 text-zinc-300", date: "1h ago" },
-];
+
 
 export default function DashboardOverview() {
   const [user, setUser] = useState<any>(null);
+  const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showChecklist, setShowChecklist] = useState(true);
 
   useEffect(() => {
-    fetchApi("/api/user/me")
-      .then((res) => {
-        setUser(res);
-        setLoading(false);
-      })
-      .catch(() => {
-        setLoading(false);
-      });
+    Promise.all([
+      fetchApi("/api/user/me"),
+      fetchApi("/api/user/logs").catch(() => [])
+    ])
+    .then(([userData, logsData]) => {
+      setUser(userData);
+      setLogs(logsData || []);
+      setLoading(false);
+    })
+    .catch(() => setLoading(false));
   }, []);
 
   if (loading) return <div>Loading...</div>;
@@ -198,7 +194,27 @@ export default function DashboardOverview() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/50 text-sm">
-              {MOCK_LOGS.map((log) => (
+              {logs.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-zinc-500">
+                    No API logs yet. Make a request through your Gateway URL to see logs here.
+                  </td>
+                </tr>
+              ) : logs.map((log) => {
+                // Parse date for prettier formatting if valid
+                let displayDate = log.date;
+                try {
+                  const d = new Date(log.date);
+                  // Check if valid date
+                  if (!isNaN(d.getTime())) {
+                       const diff = Math.floor((new Date().getTime() - d.getTime()) / 60000);
+                       if (diff < 1) displayDate = "Just now";
+                       else if (diff < 60) displayDate = `${diff}m ago`;
+                       else displayDate = `${Math.floor(diff/60)}h ${diff%60}m ago`;
+                  }
+                } catch(e) {}
+                  
+                return (
                 <tr key={log.id} className="hover:bg-zinc-800/30 transition-colors">
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded text-xs font-bold ${
@@ -224,9 +240,9 @@ export default function DashboardOverview() {
                       {log.action}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right text-zinc-500 text-xs whitespace-nowrap">{log.date}</td>
+                  <td className="px-6 py-4 text-right text-zinc-500 text-xs whitespace-nowrap">{displayDate}</td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>

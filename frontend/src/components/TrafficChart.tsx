@@ -40,15 +40,12 @@ export default function TrafficChart() {
 
     const fetchTraffic = async () => {
       try {
-        const result = await fetchApi("/api/traffic");
-        if (result.traffic_data && result.traffic_data.length > 0) {
+        const result = await fetchApi("/api/user/traffic");
+        if (result.traffic_data) {
            setData(result.traffic_data);
-        } else {
-           updateTraffic();
         }
       } catch {
-        // Fallback to updating the mock chart live
-        updateTraffic();
+        // Fallback or silent error
       }
     };
 

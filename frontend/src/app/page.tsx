@@ -124,9 +124,9 @@ const PATHS = [
 const METHODS = ["GET", "GET", "GET", "POST", "POST"];
 
 const LiveMetricsCard = () => {
-  const [reqs, setReqs] = useState(1284);
-  const [hits, setHits] = useState(947);
-  const [blocked, setBlocked] = useState(23);
+  const [reqs, setReqs] = useState(14282);
+  const [hits, setHits] = useState(11340);
+  const [blocked, setBlocked] = useState(412);
   const [log, setLog] = useState([
     { method: "GET", path: "/api/products", ms: 0.4, type: "cache" },
     { method: "POST", path: "/api/orders", ms: 12, type: "forward" },
@@ -136,6 +136,8 @@ const LiveMetricsCard = () => {
 
   useEffect(() => {
     const iv = setInterval(() => {
+      const burst = Math.floor(Math.random() * 8) + 1; // Add 1 to 8 requests per half-second
+      
       const isWaf = Math.random() < 0.1;
       const isCached = !isWaf && Math.random() < 0.7;
       const method = METHODS[Math.floor(Math.random() * METHODS.length)];
@@ -151,11 +153,12 @@ const LiveMetricsCard = () => {
         ms,
         type: isWaf ? "waf" : isCached ? "cache" : "forward",
       };
-      setReqs((r) => r + 1);
-      if (isCached) setHits((h) => h + 1);
-      if (isWaf) setBlocked((b) => b + 1);
+      
+      setReqs((r) => r + burst);
+      setHits((h) => h + (isCached ? burst : 0));
+      setBlocked((b) => b + (isWaf ? 1 : 0));
       setLog((prev) => [entry, ...prev].slice(0, 4));
-    }, 1200);
+    }, 400); // Super fast 400ms updates
     return () => clearInterval(iv);
   }, []);
 

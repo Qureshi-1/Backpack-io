@@ -71,6 +71,7 @@ async def startup():
 
         # Auto-set Admin — always run on startup
         with SessionLocal() as db:
+            from models import User
             admin_user = db.query(User).filter(User.email == ADMIN_EMAIL).first()
             if admin_user:
                 admin_user.is_admin = True

@@ -28,6 +28,7 @@ export default function Navbar() {
   const baseLinks = [
     { name: "Overview", href: "/dashboard" },
     { name: "API Keys", href: "/dashboard/api-keys" },
+    { name: "Playground", href: "/dashboard/playground" },
     { name: "Settings", href: "/dashboard/settings" },
     { name: "Billing", href: "/dashboard/billing" },
   ];

@@ -24,6 +24,9 @@ export default function Header({ onDemo }: { onDemo?: () => void }) {
           </span>
         </Link>
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-400">
+          <Link href="/docs" className="hover:text-white transition-colors">
+            Docs
+          </Link>
           <Link href="/#features" className="hover:text-white transition-colors">
             Features
           </Link>
@@ -75,6 +78,7 @@ export default function Header({ onDemo }: { onDemo?: () => void }) {
             className="md:hidden border-t border-white/5 bg-black/95 backdrop-blur-xl overflow-hidden"
           >
             <div className="flex flex-col gap-4 px-6 py-6">
+              <Link href="/docs" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-zinc-400 hover:text-white">Docs</Link>
               <Link href="/#features" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-zinc-400 hover:text-white">Features</Link>
               <Link href="/#how-it-works" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-zinc-400 hover:text-white">How it Works</Link>
               <Link href="/#compare" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-zinc-400 hover:text-white">Compare</Link>

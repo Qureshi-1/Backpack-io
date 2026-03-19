@@ -62,16 +62,16 @@ async def startup():
             pass  # Already nullable or SQLite
 
         # Mark OLD users (pre-verification feature) as verified
-        # ONLY those who have NO verification token — i.e. they registered before this feature
-        # DO NOT mark new signups as verified (they have a token set)
+        # Only users created BEFORE March 19, 2026 (when this feature was added)
+        # This ensures new signups are never auto-verified by migration restarts
         try:
             with engine.begin() as conn:
                 conn.execute(text(
                     "UPDATE users SET is_verified = true WHERE "
                     "(is_verified IS NULL OR is_verified = false) "
-                    "AND email_verification_token IS NULL"
+                    "AND created_at < '2026-03-19 00:00:00'"
                 ))
-            print("✅ Migration: pre-verification users marked as verified (token-less accounts only)")
+            print("✅ Migration: pre-March-19 users marked as verified")
         except Exception as e:
             print(f"ℹ️  pre-verify migration: {e}")
 

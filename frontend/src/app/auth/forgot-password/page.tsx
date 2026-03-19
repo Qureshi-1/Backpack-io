@@ -101,11 +101,18 @@ export default function ForgotPasswordPage() {
                 </svg>
               </div>
               <p className="font-mono text-green-300 text-sm">
-                Instructions dispatched to {email}
+                Recovery Code dispatched to {email}
               </p>
               <p className="font-mono text-green-500/60 text-xs mt-2">
-                Please check your inbox (and spam folder) to proceed with identity regeneration.
+                Check your inbox and copy the 6-digit security code.
               </p>
+              
+              <Link
+                href="/auth/reset-password"
+                className="mt-6 block w-full border border-green-500 hover:bg-green-500 hover:text-black text-green-400 font-bold font-mono py-3 flex items-center justify-center uppercase tracking-widest transition-all"
+              >
+                ENTER SECURITY CODE
+              </Link>
             </div>
           )}
 

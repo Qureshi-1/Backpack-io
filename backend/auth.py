@@ -1,5 +1,7 @@
 import bcrypt
 import secrets
+import random
+import string
 import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -46,8 +48,10 @@ def signup(req: AuthReq, db: Session = Depends(get_db)):
             referred_by = referrer.id
             referrer.referrals_count += 1
 
-    # Generate email verification token
-    verification_token = secrets.token_urlsafe(32)
+            referrer.referrals_count += 1
+
+    # Generate 6-digit OTP verification token
+    verification_token = "".join(random.choices(string.digits, k=6))
 
     user = User(
         email=req.email.lower(),
@@ -154,9 +158,10 @@ def resend_verification(req: ResendReq, db: Session = Depends(get_db)):
                 detail=f"Please wait {int(60 - seconds_since)} seconds before requesting another email."
             )
 
-    new_token = secrets.token_urlsafe(32)
-    user.email_verification_token = new_token
+    new_token = "".join(random.choices(string.digits, k=6))
     user.email_verification_sent_at = datetime.utcnow()
+    # Regenerate 6-digit OTP code on resend
+    user.email_verification_token = new_token
     db.commit()
 
     try:
@@ -207,20 +212,18 @@ def forgot_password(req: ForgotPasswordReq, db: Session = Depends(get_db)):
     # Rate limiting: 1 reset link per 15 minutes
     if user.password_reset_sent_at:
         seconds_since = (datetime.utcnow() - user.password_reset_sent_at).total_seconds()
-        if seconds_since < 900:  # 15 minutes
-            raise HTTPException(
-                status_code=429,
-                detail=f"Please wait {int((900 - seconds_since) // 60)} minutes before requesting another reset link."
-            )
+        if seconds_since < 60:
+            return {"message": "If that email exists, an OTP has been sent. Please check your inbox or wait a minute before requesting again."}
 
-    token = secrets.token_urlsafe(32)
-    user.password_reset_token = token
+    # Generate 6-digit OTP reset token
+    reset_token = "".join(random.choices(string.digits, k=6))
+    user.password_reset_token = reset_token
     user.password_reset_sent_at = datetime.utcnow()
     db.commit()
 
     try:
         from email_service import send_password_reset_email
-        if send_password_reset_email(user.email, token):
+        if send_password_reset_email(user.email, reset_token):
             print(f"📧 Password reset email sent to {user.email}")
         else:
             print(f"❌ Failed to send password reset email to {user.email}")

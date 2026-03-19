@@ -41,8 +41,7 @@ def send_email(to: str, subject: str, html: str) -> bool:
 
 
 def send_verification_email(to: str, token: str) -> bool:
-    """Send the email verification link."""
-    verify_url = f"{FRONTEND_URL}/auth/verify-email?token={token}"
+    """Send the email verification code."""
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -67,21 +66,13 @@ def send_verification_email(to: str, token: str) -> bool:
           activate your Backport account. This link expires in <strong style="color:#e4e4e7">24 hours</strong>.
         </p>
 
-        <!-- CTA Button -->
-        <a href="{verify_url}"
-           style="display: inline-block; background: #10b981; color: #000;
-                  font-weight: 700; font-size: 15px; text-decoration: none;
-                  padding: 12px 28px; border-radius: 8px; margin-bottom: 28px;">
-          Verify Email →
-        </a>
+        <!-- Code Block -->
+        <div style="background: #0f172a; padding: 20px; border-radius: 8px; border: 1px dashed #10b981; text-align: center; margin-bottom: 28px;">
+          <span style="font-family: monospace; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #10b981;">{token}</span>
+        </div>
 
         <p style="color: #71717a; font-size: 13px; margin: 0 0 8px;">
-          Or copy this link into your browser:
-        </p>
-        <p style="color: #10b981; font-size: 12px; word-break: break-all;
-                  background: #0f172a; padding: 10px 12px; border-radius: 6px;
-                  border: 1px solid #1e293b; margin: 0 0 28px;">
-          {verify_url}
+          Return to the application and enter this code to verify your email.
         </p>
 
         <hr style="border: none; border-top: 1px solid #27272a; margin: 0 0 20px;">
@@ -97,8 +88,7 @@ def send_verification_email(to: str, token: str) -> bool:
 
 
 def send_password_reset_email(to: str, token: str) -> bool:
-    """Send a password reset link."""
-    reset_url = f"{FRONTEND_URL}/auth/reset-password?token={token}"
+    """Send a password reset code."""
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -123,21 +113,13 @@ def send_password_reset_email(to: str, token: str) -> bool:
           Click the button below to choose a new password. This link expires in <strong style="color:#e4e4e7">1 hour</strong>.
         </p>
 
-        <!-- CTA Button -->
-        <a href="{reset_url}"
-           style="display: inline-block; background: #10b981; color: #000;
-                  font-weight: 700; font-size: 15px; text-decoration: none;
-                  padding: 12px 28px; border-radius: 8px; margin-bottom: 28px;">
-          Reset Password →
-        </a>
+        <!-- Code Block -->
+        <div style="background: #0f172a; padding: 20px; border-radius: 8px; border: 1px dashed #10b981; text-align: center; margin-bottom: 28px;">
+          <span style="font-family: monospace; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #10b981;">{token}</span>
+        </div>
 
         <p style="color: #71717a; font-size: 13px; margin: 0 0 8px;">
-          Or copy this link into your browser:
-        </p>
-        <p style="color: #10b981; font-size: 12px; word-break: break-all;
-                  background: #0f172a; padding: 10px 12px; border-radius: 6px;
-                  border: 1px solid #1e293b; margin: 0 0 28px;">
-          {reset_url}
+          Return to the application and enter this code to securely update your password.
         </p>
 
         <hr style="border: none; border-top: 1px solid #27272a; margin: 0 0 20px;">

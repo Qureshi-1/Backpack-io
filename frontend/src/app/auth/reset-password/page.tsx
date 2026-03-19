@@ -17,7 +17,8 @@ function ResetPasswordForm() {
   const [success, setSuccess] = useState(false);
   
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  const urlToken = searchParams.get("token") || "";
+  const [tokenInput, setTokenInput] = useState(urlToken);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,8 +31,8 @@ function ResetPasswordForm() {
       setError("Password must be at least 6 characters.");
       return;
     }
-    if (!token) {
-      setError("Reset token is missing from the URL.");
+    if (!tokenInput || tokenInput.length < 6) {
+      setError("Please enter the 6-digit verification code sent to your email.");
       return;
     }
 
@@ -41,7 +42,7 @@ function ResetPasswordForm() {
     try {
       await fetchApi("/api/auth/reset-password", {
         method: "POST",
-        body: JSON.stringify({ token, new_password: password }),
+        body: JSON.stringify({ token: tokenInput, new_password: password }),
       });
       setSuccess(true);
       toast.success("Security clearance restored!");
@@ -73,6 +74,21 @@ function ResetPasswordForm() {
 
           {!success ? (
             <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label className="block text-xs font-mono text-green-500 mb-2 uppercase tracking-wider">
+                  &gt; Security Code (From Email)
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={tokenInput}
+                  onChange={(e) => setTokenInput(e.target.value.replace(/[^0-9a-zA-Z]/g, '').toUpperCase())}
+                  maxLength={6}
+                  className="w-full bg-black border border-green-500/50 px-4 py-3 text-green-300 font-mono text-center tracking-[0.5em] focus:border-green-400 focus:shadow-[0_0_15px_#00ff87] outline-none transition-all placeholder:text-green-900/50 mb-6"
+                  placeholder="XXXXXX"
+                />
+              </div>
+
               <div>
                 <label className="block text-xs font-mono text-green-500 mb-2 uppercase tracking-wider">
                   &gt; New Passphrase [Password]
